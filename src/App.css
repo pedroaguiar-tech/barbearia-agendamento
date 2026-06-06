@@ -1,0 +1,553 @@
+/* Configuração global da página para fundo escuro */
+body {
+  background-color: #0f0f11;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 500px;
+  margin: 40px auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+  padding: 30px 20px;
+  background-color: #1a1a1e; /* Fundo grafite escuro combinando com o logo */
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+}
+
+/* 💈 LOGO OFICIAL CONFIGURADO */
+.barber-header {
+  margin-bottom: 35px;
+}
+
+.logo-oficial {
+  width: 100%;
+  max-width: 240px; /* Tamanho perfeito para destacar o selo */
+  height: auto;
+  border-radius: 12px;
+}
+
+.divisor-linha {
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, #e53e3e 0%, #3182ce 100%); /* Linha estilizada nas cores do Barber Pole */
+  margin: 20px auto 0 auto;
+  border-radius: 2px;
+}
+
+.instrucao {
+  color: #a0aec0;
+  font-size: 1rem;
+  margin-bottom: 25px;
+}
+
+.lista-servicos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* CARDS DE SERVIÇO EM ESTILO ESCURO PREMIUM */
+.card-servico-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #24242b;
+  padding: 18px 22px;
+  border-radius: 10px;
+  border: 1px solid #32323d;
+  text-align: left;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.card-servico-item:hover {
+  transform: translateY(-2px);
+  border-color: #4a4a5a;
+}
+
+.servico-info h3 {
+  margin: 0 0 6px 0;
+  color: #ffffff;
+  font-size: 1.1rem;
+}
+
+.servico-info p {
+  margin: 0;
+  color: #a0aec0;
+  font-size: 0.9rem;
+}
+
+.servico-preco-acao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.preco {
+  font-weight: 700;
+  color: #63b3ed; /* Azul claro para destacar o preço no escuro */
+  font-size: 1.2rem;
+}
+
+/* BOTÕES DE AUTO CONTRASTE (BRANCO E PRETO) */
+button {
+  background-color: #ffffff;
+  color: #1a1a1e;
+  border: none;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: opacity 0.2s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.btn-barbeiro {
+  background-color: #ffffff;
+  color: #1a1a1e;
+  padding: 18px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+}
+
+.lista-barbeiros {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 25px 0;
+}
+
+/* SELETOR DE HORÁRIOS */
+.input-data {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: 1px solid #32323d;
+  background-color: #24242b;
+  color: white;
+  margin-bottom: 25px;
+  box-sizing: border-box;
+}
+
+.resumo-escolhas {
+  background-color: #1e2d3d;
+  border-left: 4px solid #3182ce;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  text-align: left;
+  font-size: 0.95rem;
+  margin-bottom: 25px;
+}
+
+.resumo-escolhas p {
+  margin: 4px 0;
+}
+
+.grade-horarios {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.btn-horario {
+  background-color: #24242b;
+  color: #ffffff;
+  border: 1px solid #32323d;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.btn-horario:hover {
+  background-color: #3182ce; /* Azul do pole ao selecionar */
+  border-color: #3182ce;
+}
+
+.btn-horario.ocupado {
+  background-color: #1a1a1e;
+  color: #4a4a5a;
+  border-color: #24242b;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* FORMULÁRIO */
+.formulario-cliente {
+  text-align: left;
+  margin: 25px 0;
+  background-color: #24242b;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #32323d;
+}
+
+.campo-input {
+  margin-bottom: 20px;
+}
+
+.campo-input label {
+  display: block;
+  font-weight: 600;
+  color: #a0aec0;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.campo-input input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #32323d;
+  background-color: #1a1a1e;
+  color: white;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.btn-confirmar {
+  width: 100%;
+  background-color: #e53e3e; /* Vermelho do pole para o botão de confirmação pesada */
+  color: white;
+  padding: 14px;
+  font-size: 1.05rem;
+}
+
+/* SUCESSO / NOTIFICAÇÃO DO SISTEMA */
+.card-sucesso {
+  border: 1px solid #2d3748;
+  border-radius: 12px;
+  padding: 25px;
+  background-color: #24242b;
+}
+
+.detalhes-finais {
+  text-align: left;
+  background-color: #1a1a1e;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  border: 1px solid #32323d;
+}
+
+.detalhes-finais p {
+  margin: 10px 0;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #32323d;
+  margin: 15px 0;
+}
+
+.btn-voltar {
+  background-color: #4a4a5a;
+  color: white;
+}
+
+.badge {
+  display: inline-block;
+  background-color: #32323d;
+  color: #e2e8f0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge-sabado {
+  background-color: #2c1e11;
+  border: 1px solid #7b341e;
+  color: #f6ad55;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: inline-block;
+}
+
+.aviso-fechado {
+  background-color: #2d1212;
+  border: 1px solid #9b2c2c;
+  color: #feb2b2;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 25px;
+}
+
+/* 📸 ESTILIZAÇÃO DO CARROSSEL DE ENTRADA */
+.secao-galeria-topo {
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.titulo-galeria {
+  font-size: 1.1rem;
+  color: #ffffff;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-left: 3px solid #3182ce;
+  padding-left: 8px;
+}
+
+.carrossel-container {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.carrossel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.carrossel-item {
+  flex: 0 0 135px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.carrossel-img {
+  width: 135px;
+  height: 135px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #32323d;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.carrossel-legenda {
+  font-size: 0.8rem;
+  color: #a0aec0;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* 💈 DESIGN DOS CARDS DOS BARBEIROS */
+.lista-barbeiros {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 30px 0;
+}
+
+.card-barbeiro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #24242b;
+  border: 1px solid #32323d;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.clique-selecao {
+  flex: 1;
+  padding: 20px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.barbeiro-nome {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.btn-instagram {
+  background-color: #1a1a1e;
+  color: #a0aec0;
+  text-decoration: none;
+  padding: 22px 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-left: 1px solid #32323d;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.btn-instagram:hover {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: #ffffff;
+}
+
+/* ALINHAMENTO DO CARD DE SERVIÇO */
+.servico-bloco-esquerdo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.servico-img-miniatura {
+  width: 65px;
+  height: 65px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #32323d;
+}
+
+.servico-img-placeholder {
+  width: 65px;
+  height: 65px;
+  background-color: #1a1a1e;
+  border: 1px dashed #32323d;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: #718096;
+}
+
+/* 🛒 ESTILOS DO NOVO SISTEMA DE CARRINHO */
+
+/* Efeito visual quando o card de serviço está selecionado */
+.card-servico-item.item-selecionado {
+  border-color: #3182ce;
+  background-color: #1e2530;
+  box-shadow: 0 0 10px rgba(49, 130, 206, 0.2);
+}
+
+/* Botão de adicionar ao carrinho */
+.btn-adicionar-item {
+  background-color: #3182ce;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-adicionar-item:hover {
+  background-color: #2b6cb0;
+}
+
+/* Botão de remover do carrinho */
+.btn-remover-item {
+  background-color: #e53e3e;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-remover-item:hover {
+  background-color: #c53030;
+}
+
+/* Barra do carrinho fixada na parte inferior da tela */
+.barra-carrinho-fixa {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #1a1a1e;
+  border-top: 2px solid #3182ce;
+  padding: 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 999;
+  box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.5);
+}
+
+.info-carrinho {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.qtd-itens {
+  font-size: 0.9rem;
+  color: #a0aec0;
+}
+
+.valor-total-carrinho {
+  font-size: 1.2rem;
+  color: #ffffff;
+}
+
+.valor-total-carrinho strong {
+  color: #48bb78;
+}
+
+/* Botão principal para prosseguir na barra do carrinho */
+.btn-avancar-fluxo {
+  background-color: #48bb78;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+  transition: transform 0.1s, background 0.2s;
+}
+
+.btn-avancar-fluxo:hover {
+  background-color: #38a169;
+  transform: translateY(-1px);
+}
+
+.btn-avancar-fluxo:active {
+  transform: translateY(1px);
+}
+
+/* Badge que mostra a lista de serviços no passo 2 */
+.badge-multi-servicos {
+  background-color: #2d3748;
+  color: #e2e8f0;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  display: inline-block;
+  margin-bottom: 20px;
+  border: 1px solid #4a5568;
+} 
+
+/* 💬 BOTÃO DA NOTIFICAÇÃO DO WHATSAPP */
+.btn-enviar-whats-notificacao {
+  background-color: #25d366; /* Verde oficial do WhatsApp */
+  color: #ffffff;
+  border: none;
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  width: 100%;
+  margin-top: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-enviar-whats-notificacao:hover {
+  background-color: #1ebd56;
+  transform: translateY(-1px);
+}
+
+.btn-enviar-whats-notificacao:active {
+  transform: translateY(1px);
+}
