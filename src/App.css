@@ -1,39 +1,12 @@
-body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; background-color: #0f0f11; }
-
+body { margin: 0; padding: 0; background-color: #0f0f11; }
 .container {
   width: 100%;
   max-width: 500px;
   margin: 0 auto;
-  padding: 20px 15px; /* Padding menor para não cortar em telas pequenas */
-  box-sizing: border-box; /* Essencial para manter o tamanho correto */
+  padding: 20px;
+  box-sizing: border-box;
   background-color: #1a1a1e;
-  border-radius: 16px;
   color: #ffffff;
-  text-align: center;
+  border-radius: 16px;
 }
-
-.logo-oficial { width: 100%; max-width: 240px; height: auto; border-radius: 12px; }
-
-.card-servico-item, .card-barbeiro {
-  display: flex; justify-content: space-between; align-items: center;
-  background-color: #24242b; padding: 15px; border-radius: 10px; border: 1px solid #32323d;
-  box-sizing: border-box;
-}
-
-.input-data, .campo-input input {
-  width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #32323d;
-  background-color: #24242b; color: white; box-sizing: border-box;
-}
-
-.grade-horarios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.btn-horario { background-color: #24242b; color: #ffffff; padding: 10px; border-radius: 8px; border: 1px solid #32323d; }
-
-.barra-carrinho-fixa {
-  position: fixed; bottom: 0; left: 0; right: 0; background-color: #1a1a1e;
-  border-top: 2px solid #3182ce; padding: 15px; display: flex; justify-content: space-between;
-  box-sizing: border-box;
-}
-
-.btn-enviar-whats-notificacao {
-  background-color: #25d366; color: white; width: 100%; padding: 15px; border-radius: 8px; font-weight: 700;
-}
+img, button, input { max-width: 100%; box-sizing: border-box; }

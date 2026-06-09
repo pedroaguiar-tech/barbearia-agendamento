@@ -1,25 +1,11 @@
-:root {
-  --text: #9ca3af;
-  --text-h: #f3f4f6;
-  --bg: #16171d;
-  --border: #2e303a;
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  font: 18px/145% var(--sans);
-  color: var(--text);
-  background: var(--bg);
-}
-
-body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
-
+body { margin: 0; padding: 0; background-color: #fff; }
 #root {
   width: 100%;
   max-width: 500px;
   margin: 0 auto;
   text-align: center;
-  min-height: 100svh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box; /* Isso impede que o elemento cresça além da tela */
+  box-sizing: border-box;
 }
-
-h1, h2 { font-family: var(--sans); font-weight: 500; color: var(--text-h); }
