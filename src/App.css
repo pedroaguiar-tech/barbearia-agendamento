@@ -3,8 +3,13 @@ body { margin: 0; padding: 0; background-color: #0f0f11; width: 100%; }
 
 .container {
   width: 100%;
-  padding: 15px;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
   background-color: #1a1a1e;
+  border-radius: 0;
   color: #ffffff;
+  text-align: center;
   min-height: 100vh;
 }
