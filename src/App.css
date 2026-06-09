@@ -1,12 +1,10 @@
-body { margin: 0; padding: 0; background-color: #0f0f11; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; background-color: #0f0f11; width: 100%; }
+
 .container {
   width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 20px;
-  box-sizing: border-box;
+  padding: 15px;
   background-color: #1a1a1e;
   color: #ffffff;
-  border-radius: 16px;
+  min-height: 100vh;
 }
-img, button, input { max-width: 100%; box-sizing: border-box; }
