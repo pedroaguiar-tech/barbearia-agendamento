@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import { db } from './firebase'
+import { 
+  collection, 
+  addDoc, 
+  onSnapshot, 
+  doc, 
+  updateDoc, 
+  deleteDoc 
+} from 'firebase/firestore'
 
 function App() {
   const [passo, setPasso] = useState(1) // 1: Serviços, 2: Barbeiro, 3: Data/Horário, 4: Identificação, 5: Sucesso, 6: Painel Barbeiro
@@ -10,16 +19,21 @@ function App() {
   const [nomeCliente, setNomeCliente] = useState('')
   const [telefoneCliente, setTelefoneCliente] = useState('')
 
-  // 📝 BANCO DE DADOS PERSISTENTE (Salvo no LocalStorage)
-  const [listaAgendamentos, setListaAgendamentos] = useState(() => {
-    const dadosSalvos = localStorage.getItem('castro_corts_agendamentos')
-    return dadosSalvos ? JSON.parse(dadosSalvos) : []
-  })
+  // ☁️ BANCO DE DADOS EM TEMPO REAL NA NUVEM (FIREBASE)
+  const [listaAgendamentos, setListaAgendamentos] = useState([])
 
-  // Salva no LocalStorage sempre que a lista de agendamentos for alterada
+  // Escuta os agendamentos da nuvem em tempo real
   useEffect(() => {
-    localStorage.setItem('castro_corts_agendamentos', JSON.stringify(listaAgendamentos))
-  }, [listaAgendamentos])
+    const unsubscribe = onSnapshot(collection(db, 'agendamentos'), (snapshot) => {
+      const dadosNuvem = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      setListaAgendamentos(dadosNuvem)
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   // 🔒 ESTADOS DO PAINEL PRIVADO DO BARBEIRO
   const [senhaInput, setSenhaInput] = useState('')
@@ -84,42 +98,52 @@ function App() {
     setPasso(4)
   }
 
-  function finalizarAgendamento(e) {
+  // SALVA O NOVO AGENDAMENTO NA NUVEM
+  async function finalizarAgendamento(e) {
     e.preventDefault()
     if (nomeCliente.trim() === '' || telefoneCliente.trim() === '') {
       alert('Por favor, preencha o seu nome e telefone.')
       return
     }
 
-    const novoAgendamento = {
-      id: Date.now(),
-      cliente: nomeCliente,
-      telefone: telefoneCliente,
-      barbeiro: barbeiroSelecionado,
-      data: dataSelecionada,
-      horario: horarioSelecionado,
-      servicos: carrinho.map(s => s.nome).join(', '),
-      valor: totalPreco,
-      status: 'pendente'
+    try {
+      await addDoc(collection(db, 'agendamentos'), {
+        cliente: nomeCliente,
+        telefone: telefoneCliente,
+        barbeiro: barbeiroSelecionado,
+        data: dataSelecionada,
+        horario: horarioSelecionado,
+        servicos: carrinho.map(s => s.nome).join(', '),
+        valor: totalPreco,
+        status: 'pendente',
+        criadoEm: Date.now()
+      })
+      setPasso(5)
+    } catch (error) {
+      console.error("Erro ao salvar no Firebase:", error)
+      alert("Ocorreu um erro ao agendar. Tente novamente!")
     }
-
-    setListaAgendamentos([...listaAgendamentos, novoAgendamento])
-    setPasso(5)
   }
 
-  function concluirAtendimento(idAtendimento) {
-    setListaAgendamentos(listaAgendamentos.map(item => {
-      if (item.id === idAtendimento) {
-        return { ...item, status: 'concluido' }
-      }
-      return item
-    }))
+  // MARCA ATENDIMENTO COMO CONCLUÍDO NA NUVEM
+  async function concluirAtendimento(idAtendimento) {
+    try {
+      const docRef = doc(db, 'agendamentos', idAtendimento)
+      await updateDoc(docRef, { status: 'concluido' })
+    } catch (error) {
+      console.error("Erro ao concluir atendimento:", error)
+    }
   }
 
-  function cancelarAgendamento(idParaRemover) {
-    const confirmar = window.confirm('Tem certeza que deseja cancelar este agendamento? O horário ficará livre novamente no site.')
+  // REMOVE AGENDAMENTO DA NUVEM (LIBERA O HORÁRIO NO SITE PARA TODOS)
+  async function cancelarAgendamento(idParaRemover) {
+    const confirmar = window.confirm('Tem certeza que deseja cancelar este agendamento? O horário ficará livre novamente no site para todos.')
     if (confirmar) {
-      setListaAgendamentos(listaAgendamentos.filter(item => item.id !== idParaRemover))
+      try {
+        await deleteDoc(doc(db, 'agendamentos', idParaRemover))
+      } catch (error) {
+        console.error("Erro ao cancelar agendamento:", error)
+      }
     }
   }
 
@@ -207,7 +231,7 @@ function App() {
     }
   }
 
-  // 📊 CÁLCULOS DO DASHBOARD E DESEMPENHO
+  // 📊 CÁLCULOS DO DASHBOARD E DESEMPENHO NA NUVEM
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
   const dataHojeString = hoje.toISOString().split('T')[0]
@@ -428,7 +452,7 @@ function App() {
         </div>
       )}
 
-      {/* 🔒 PASSO 6: PAINEL DO BARBEIRO */}
+      {/* 🔒 PASSO 6: PAINEL DO BARBEIRO (SINCRONIZADO NA NUVEM) */}
       {passo === 6 && (
         <div className="card-secao conteudo-passo">
           {!autenticado ? (
@@ -533,9 +557,9 @@ function App() {
                 )}
               </div>
 
-              {/* LISTA DE AGENDAMENTOS */}
+              {/* LISTA DE AGENDAMENTOS EM TEMPO REAL */}
               <div className="lista-agenda-dia">
-                <h3>Agendamentos ({barbeiroPainel}):</h3>
+                <h3>Agendamentos Realtime ({barbeiroPainel}):</h3>
                 
                 {agendamentosBarbeiro.map(item => (
                   <div key={item.id} className="card-servico-item" style={{ 
