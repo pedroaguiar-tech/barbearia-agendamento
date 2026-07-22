@@ -41,7 +41,8 @@ function App() {
   const [barbeiroPainel, setBarbeiroPainel] = useState('Brendon')
   const [dataFiltroDesempenho, setDataFiltroDesempenho] = useState(new Date().toISOString().split('T')[0])
 
-  const SENHA_BARBEIRO = '1234'
+  // Nova Senha de Acesso
+  const SENHA_BARBEIRO = 'castrobarber'
 
   // 📱 CONFIGURAÇÃO DOS WHATSAPPS DOS BARBEIROS
   const whatsAppBarbeiros = {
@@ -72,10 +73,86 @@ function App() {
     { src: '/infantil.jpeg', legenda: 'Estilo Infantil 🚀' }, 
   ]
 
-  const horariosPadrao = [
-    '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', 
-    '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+  // 🔒 CLIENTES FIXOS DO BRENDON
+  // (diaSemana: 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb)
+  const clientesFixosBrendon = [
+    // Quarta (3)
+    { diaSemana: 3, horario: '13:00', cliente: 'João Paulo (Fixo)' },
+    { diaSemana: 3, horario: '18:00', cliente: 'Jhow (Fixo)' },
+    { diaSemana: 3, horario: '19:00', cliente: 'Celso (Fixo)' },
+    // Quinta (4)
+    { diaSemana: 4, horario: '13:00', cliente: 'Fabricio (Fixo)' },
+    // Sexta (5)
+    { diaSemana: 5, horario: '09:00', cliente: 'Diego (Fixo)' },
+    { diaSemana: 5, horario: '13:00', cliente: 'Roger (Fixo)' },
+    { diaSemana: 5, horario: '17:00', cliente: 'Raul (Fixo)' },
+    { diaSemana: 5, horario: '18:00', cliente: 'Pedrão (Fixo)' },
+    { diaSemana: 5, horario: '19:00', cliente: 'Wendel (Fixo)' },
+    { diaSemana: 5, horario: '20:00', cliente: 'Juninho (Fixo)' },
+    // Sábado (6)
+    { diaSemana: 6, horario: '11:00', cliente: 'Davi Primo (Fixo)' },
+    { diaSemana: 6, horario: '18:00', cliente: 'Paulo (Fixo)' },
   ]
+
+  // Função para saber se o sábado selecionado é o último do mês (5º sábado ou último do mês)
+  function ehUltimoSabadoDoMes(dataStr) {
+    if (!dataStr) return false
+    const [ano, mes, dia] = dataStr.split('-').map(Number)
+    const dataObj = new Date(ano, mes - 1, dia)
+    if (dataObj.getDay() !== 6) return false
+
+    const proximaSemana = new Date(dataObj)
+    proximaSemana.setDate(dataObj.getDate() + 7)
+    return proximaSemana.getMonth() !== (mes - 1)
+  }
+
+  // GERADOR DE HORÁRIOS ESPECÍFICOS POR DIA / BARBEIRO
+  function obterHorariosDisponiveis(barbeiro, dataStr) {
+    if (!dataStr) return []
+    const [ano, mes, dia] = dataStr.split('-').map(Number)
+    const dataObj = new Date(ano, mes - 1, dia)
+    const diaSemana = dataObj.getDay() // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb
+
+    // Agenda Padrão do Lucas (Todos os dias das 09h às 20h)
+    if (barbeiro === 'Lucas') {
+      return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']
+    }
+
+    // Agenda Específica do Brendon por dia da semana:
+    // Domingo (0)
+    if (diaSemana === 0) {
+      return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00']
+    }
+    // Segunda-feira (1) - FOLGA
+    if (diaSemana === 1) {
+      return []
+    }
+    // Terça (2)
+    if (diaSemana === 2) {
+      return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+    }
+    // Quarta (3)
+    if (diaSemana === 3) {
+      return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
+    }
+    // Quinta (4)
+    if (diaSemana === 4) {
+      return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+    }
+    // Sexta (5)
+    if (diaSemana === 5) {
+      return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00']
+    }
+    // Sábado (6)
+    if (diaSemana === 6) {
+      if (ehUltimoSabadoDoMes(dataStr)) {
+        return ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
+      }
+      return ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00']
+    }
+
+    return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']
+  }
 
   function toggleServicoNoCarrinho(servico) {
     const jaAdicionado = carrinho.some(item => item.id === servico.id)
@@ -125,13 +202,36 @@ function App() {
     }
   }
 
-  // MARCA ATENDIMENTO COMO CONCLUÍDO NA NUVEM
-  async function concluirAtendimento(idAtendimento) {
-    try {
-      const docRef = doc(db, 'agendamentos', idAtendimento)
-      await updateDoc(docRef, { status: 'concluido' })
-    } catch (error) {
-      console.error("Erro ao concluir atendimento:", error)
+  // CONCLUI ATENDIMENTO PERMITINDO INSERIR VALOR MANUALMENTE
+  async function concluirAtendimento(item) {
+    const valorDigitado = prompt(`Confirmar conclusão do corte de ${item.cliente}.\nQual foi o valor cobrado (R$)?`, item.valor || 40)
+    
+    if (valorDigitado !== null) {
+      const valorFinal = Number(valorDigitado) || item.valor || 0
+      try {
+        if (item.id) {
+          const docRef = doc(db, 'agendamentos', item.id)
+          await updateDoc(docRef, { 
+            status: 'concluido',
+            valor: valorFinal 
+          })
+        } else {
+          // Se for cliente fixo sem documento criado ainda, salva como concluído direto
+          await addDoc(collection(db, 'agendamentos'), {
+            cliente: item.cliente,
+            telefone: 'Cliente Fixo',
+            barbeiro: 'Brendon',
+            data: dataSelecionada || new Date().toISOString().split('T')[0],
+            horario: item.horario || 'Fixo',
+            servicos: 'Atendimento Fixo',
+            valor: valorFinal,
+            status: 'concluido',
+            criadoEm: Date.now()
+          })
+        }
+      } catch (error) {
+        console.error("Erro ao concluir atendimento:", error)
+      }
     }
   }
 
@@ -140,9 +240,32 @@ function App() {
     const confirmar = window.confirm('Tem certeza que deseja cancelar este agendamento? O horário ficará livre novamente no site para todos.')
     if (confirmar) {
       try {
-        await deleteDoc(doc(db, 'agendamentos', idParaRemover))
+        const docRef = doc(db, 'agendamentos', idParaRemover)
+        await deleteDoc(docRef)
       } catch (error) {
         console.error("Erro ao cancelar agendamento:", error)
+      }
+    }
+  }
+
+  // LIBERA HORÁRIO DE CLIENTE FIXO CRIANDO UM BLOQUEIO DE CANCELAMENTO
+  async function liberarHorarioFixo(fixoObj) {
+    const confirmar = window.confirm(`Deseja cancelar o horário do cliente fixo (${fixoObj.cliente}) no dia selecionado e liberar para o site?`)
+    if (confirmar) {
+      try {
+        await addDoc(collection(db, 'agendamentos'), {
+          cliente: `${fixoObj.cliente} (CANCELADO)`,
+          telefone: 'Fixo Liberado',
+          barbeiro: 'Brendon',
+          data: dataSelecionada || new Date().toISOString().split('T')[0],
+          horario: fixoObj.horario,
+          servicos: 'Fixo Cancelado',
+          valor: 0,
+          status: 'fixo_cancelado',
+          criadoEm: Date.now()
+        })
+      } catch (error) {
+        console.error("Erro ao liberar horário fixo:", error)
       }
     }
   }
@@ -212,12 +335,35 @@ function App() {
     return false
   }
 
+  // CHECA SE O HORÁRIO ESTÁ OCUPADO (POR SITE, POR FIXO OU SE FOI CANCELADO)
   function checarHorarioOcupado(horario) {
-    return listaAgendamentos.some(item => 
+    // 1. Checa agendamentos normais ou cancelamento de fixos no banco
+    const registroNuvem = listaAgendamentos.find(item => 
       item.data === dataSelecionada && 
       item.barbeiro === barbeiroSelecionado && 
       item.horario === horario
     )
+
+    if (registroNuvem) {
+      if (registroNuvem.status === 'fixo_cancelado') {
+        return { ocupado: false, motivo: '' } // Se o fixo foi cancelado, libera pro site!
+      }
+      return { ocupado: true, motivo: registroNuvem.cliente }
+    }
+
+    // 2. Checa se é um cliente fixo do Brendon
+    if (barbeiroSelecionado === 'Brendon' && dataSelecionada) {
+      const [ano, mes, dia] = dataSelecionada.split('-').map(Number)
+      const dataObj = new Date(ano, mes - 1, dia)
+      const diaSemana = dataObj.getDay()
+
+      const fixo = clientesFixosBrendon.find(f => f.diaSemana === diaSemana && f.horario === horario)
+      if (fixo) {
+        return { ocupado: true, motivo: fixo.cliente }
+      }
+    }
+
+    return { ocupado: false, motivo: '' }
   }
 
   function validarAcessoBarbeiro(e) {
@@ -245,7 +391,7 @@ function App() {
   const domSemana = new Date(segSemana)
   domSemana.setDate(segSemana.getDate() + 6)
 
-  const agendamentosBarbeiro = listaAgendamentos.filter(item => item.barbeiro === barbeiroPainel)
+  const agendamentosBarbeiro = listaAgendamentos.filter(item => item.barbeiro === barbeiroPainel && item.status !== 'fixo_cancelado')
   const agendamentosConcluidos = agendamentosBarbeiro.filter(item => item.status === 'concluido')
 
   const faturamentoHoje = agendamentosConcluidos
@@ -392,12 +538,22 @@ function App() {
             }
 
             if (dataSelecionada) {
+              const listaHorarios = obterHorariosDisponiveis(barbeiroSelecionado, dataSelecionada);
+
+              if (listaHorarios.length === 0) {
+                return (
+                  <div className="aviso-fechado" style={{ marginTop: '15px' }}>
+                    <p>😴 O profissional está de folga nesta data!</p>
+                  </div>
+                )
+              }
+
               return (
                 <div className="secao-horas-animada">
                   <h3>2. Horários para ({formatarData(dataSelecionada)}):</h3>
                   <div className="grade-horarios">
-                    {horariosPadrao.map((horario) => {
-                      const ocupado = checarHorarioOcupado(horario);
+                    {listaHorarios.map((horario) => {
+                      const { ocupado, motivo } = checarHorarioOcupado(horario);
                       return (
                         <button 
                           key={horario} 
@@ -410,7 +566,7 @@ function App() {
                           }}
                           onClick={() => !ocupado && avançarParaIdentificacao(horario)}
                         >
-                          {horario} {ocupado ? '(Ocupado)' : ''}
+                          {horario} {ocupado ? `(${motivo || 'Ocupado'})` : ''}
                         </button>
                       );
                     })}
@@ -557,9 +713,40 @@ function App() {
                 )}
               </div>
 
-              {/* LISTA DE AGENDAMENTOS EM TEMPO REAL */}
+              {/* LISTA DE CLIENTES FIXOS BLOQUEADOS NO PAINEL DO BRENDON */}
+              {barbeiroPainel === 'Brendon' && (
+                <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '25px', border: '1px solid #333', textAlign: 'left' }}>
+                  <h3 style={{ fontSize: '15px', color: '#ffa502', marginBottom: '10px' }}>📌 Clientes Fixos da Semana (Brendon)</h3>
+                  <p style={{ fontSize: '11px', color: '#aaa', marginBottom: '10px' }}>Se um fixo desistir ou cortar, você pode dar baixa ou liberar o horário aqui:</p>
+                  
+                  {clientesFixosBrendon.map((fixo, idx) => {
+                    const diasNomes = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+                    return (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#222', padding: '8px 12px', borderRadius: '6px', marginBottom: '6px', fontSize: '12px' }}>
+                        <span><strong>{diasNomes[fixo.diaSemana]} {fixo.horario}:</strong> {fixo.cliente}</span>
+                        <div style={{ display: 'flex', gap: '5px' }}>
+                          <button 
+                            onClick={() => concluirAtendimento({ cliente: fixo.cliente, valor: 40, horario: fixo.horario })}
+                            style={{ backgroundColor: '#2ed573', color: '#000', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}
+                          >
+                            Concluir 💵
+                          </button>
+                          <button 
+                            onClick={() => liberarHorarioFixo(fixo)}
+                            style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px' }}
+                          >
+                            Desistiu ❌
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* LISTA DE AGENDAMENTOS DO SITE EM TEMPO REAL */}
               <div className="lista-agenda-dia">
-                <h3>Agendamentos Realtime ({barbeiroPainel}):</h3>
+                <h3>Agendamentos do Site ({barbeiroPainel}):</h3>
                 
                 {agendamentosBarbeiro.map(item => (
                   <div key={item.id} className="card-servico-item" style={{ 
@@ -577,18 +764,18 @@ function App() {
                         <h4>⏰ {item.horario} - {item.cliente} ({formatarData(item.data)})</h4>
                         {item.status === 'concluido' && (
                           <span style={{ fontSize: '11px', color: '#2ed573', backgroundColor: '#1b3b22', padding: '2px 8px', borderRadius: '12px' }}>
-                            ✓ Concluído
+                            ✓ Concluído (R$ {item.valor},00)
                           </span>
                         )}
                       </div>
                       <p>📱 Whats: {item.telefone}</p>
-                      <p>📦 {item.servicos} | 💰 R$ {item.valor},00</p>
+                      <p>📦 {item.servicos} | 💰 Valor Sugerido: R$ {item.valor},00</p>
                     </div>
                     
                     <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
                       {item.status !== 'concluido' && (
                         <button 
-                          onClick={() => concluirAtendimento(item.id)}
+                          onClick={() => concluirAtendimento(item)}
                           className="btn-adicionar-item"
                           style={{ flex: 1, padding: '8px', fontSize: '12px' }}
                         >
@@ -608,7 +795,7 @@ function App() {
                 ))}
 
                 {agendamentosBarbeiro.length === 0 && (
-                  <p style={{ marginTop: '20px', color: '#888' }}>Nenhum agendamento ativo para este barbeiro! 🙌</p>
+                  <p style={{ marginTop: '20px', color: '#888' }}>Nenhum agendamento ativo pelo site para este barbeiro! 🙌</p>
                 )}
               </div>
 
