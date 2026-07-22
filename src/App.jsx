@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore'
 
 function App() {
-  const [passo, setPasso] = useState(1) // 1: Serviços, 2: Barbeiro, 3: Data/Horário, 4: Identificação, 5: Sucesso, 6: Painel Barbeiro
+  const [passo, setPasso] = useState(1) // 1: Serviços, 2: Barbeiro, 3: Data/Horário, 4: Identificação e PIX, 5: Sucesso, 6: Painel Barbeiro
   const [carrinho, setCarrinho] = useState([]) 
   const [barbeiroSelecionado, setBarbeiroSelecionado] = useState('')
   const [dataSelecionada, setDataSelecionada] = useState('')
@@ -22,7 +22,6 @@ function App() {
   // ☁️ BANCO DE DADOS EM TEMPO REAL NA NUVEM (FIREBASE)
   const [listaAgendamentos, setListaAgendamentos] = useState([])
 
-  // Escuta os agendamentos da nuvem em tempo real
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'agendamentos'), (snapshot) => {
       const dadosNuvem = snapshot.docs.map(doc => ({
@@ -41,13 +40,20 @@ function App() {
   const [barbeiroPainel, setBarbeiroPainel] = useState('Brendon')
   const [dataFiltroDesempenho, setDataFiltroDesempenho] = useState(new Date().toISOString().split('T')[0])
 
-  // Nova Senha de Acesso
   const SENHA_BARBEIRO = 'castrobarber'
 
-  // 📱 CONFIGURAÇÃO DOS WHATSAPPS DOS BARBEIROS
-  const whatsAppBarbeiros = {
-    Brendon: '5511948260279',
-    Lucas: '5511983880215'
+  // 📱 CONFIGURAÇÃO DOS WHATSAPPS E CHAVES PIX DOS BARBEIROS
+  const dadosBarbeiros = {
+    Brendon: {
+      whats: '5511948260279',
+      pix: '11948260279',
+      titular: 'Brendon Castro'
+    },
+    Lucas: {
+      whats: '5511983880215',
+      pix: '11983880215',
+      titular: 'Lucas Silva Costa'
+    }
   }
 
   // 📋 TABELA DE SERVIÇOS
@@ -74,27 +80,21 @@ function App() {
   ]
 
   // 🔒 CLIENTES FIXOS DO BRENDON
-  // (diaSemana: 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb)
   const clientesFixosBrendon = [
-    // Quarta (3)
     { diaSemana: 3, horario: '13:00', cliente: 'João Paulo (Fixo)' },
     { diaSemana: 3, horario: '18:00', cliente: 'Jhow (Fixo)' },
     { diaSemana: 3, horario: '19:00', cliente: 'Celso (Fixo)' },
-    // Quinta (4)
     { diaSemana: 4, horario: '13:00', cliente: 'Fabricio (Fixo)' },
-    // Sexta (5)
     { diaSemana: 5, horario: '09:00', cliente: 'Diego (Fixo)' },
     { diaSemana: 5, horario: '13:00', cliente: 'Roger (Fixo)' },
     { diaSemana: 5, horario: '17:00', cliente: 'Raul (Fixo)' },
     { diaSemana: 5, horario: '18:00', cliente: 'Pedrão (Fixo)' },
     { diaSemana: 5, horario: '19:00', cliente: 'Wendel (Fixo)' },
     { diaSemana: 5, horario: '20:00', cliente: 'Juninho (Fixo)' },
-    // Sábado (6)
     { diaSemana: 6, horario: '11:00', cliente: 'Davi Primo (Fixo)' },
     { diaSemana: 6, horario: '18:00', cliente: 'Paulo (Fixo)' },
   ]
 
-  // Função para saber se o sábado selecionado é o último do mês (5º sábado ou último do mês)
   function ehUltimoSabadoDoMes(dataStr) {
     if (!dataStr) return false
     const [ano, mes, dia] = dataStr.split('-').map(Number)
@@ -106,44 +106,22 @@ function App() {
     return proximaSemana.getMonth() !== (mes - 1)
   }
 
-  // GERADOR DE HORÁRIOS ESPECÍFICOS POR DIA / BARBEIRO
   function obterHorariosDisponiveis(barbeiro, dataStr) {
     if (!dataStr) return []
     const [ano, mes, dia] = dataStr.split('-').map(Number)
     const dataObj = new Date(ano, mes - 1, dia)
-    const diaSemana = dataObj.getDay() // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb
+    const diaSemana = dataObj.getDay()
 
-    // Agenda Padrão do Lucas (Todos os dias das 09h às 20h)
     if (barbeiro === 'Lucas') {
       return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']
     }
 
-    // Agenda Específica do Brendon por dia da semana:
-    // Domingo (0)
-    if (diaSemana === 0) {
-      return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00']
-    }
-    // Segunda-feira (1) - FOLGA
-    if (diaSemana === 1) {
-      return []
-    }
-    // Terça (2)
-    if (diaSemana === 2) {
-      return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
-    }
-    // Quarta (3)
-    if (diaSemana === 3) {
-      return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
-    }
-    // Quinta (4)
-    if (diaSemana === 4) {
-      return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
-    }
-    // Sexta (5)
-    if (diaSemana === 5) {
-      return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00']
-    }
-    // Sábado (6)
+    if (diaSemana === 0) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00']
+    if (diaSemana === 1) return [] // Segunda-feira (Folga)
+    if (diaSemana === 2) return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+    if (diaSemana === 3) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
+    if (diaSemana === 4) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+    if (diaSemana === 5) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00']
     if (diaSemana === 6) {
       if (ehUltimoSabadoDoMes(dataStr)) {
         return ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
@@ -193,6 +171,7 @@ function App() {
         servicos: carrinho.map(s => s.nome).join(', '),
         valor: totalPreco,
         status: 'pendente',
+        sinal: 'R$ 10,00',
         criadoEm: Date.now()
       })
       setPasso(5)
@@ -200,6 +179,12 @@ function App() {
       console.error("Erro ao salvar no Firebase:", error)
       alert("Ocorreu um erro ao agendar. Tente novamente!")
     }
+  }
+
+  // COPIA CHAVE PIX PARA A ÁREA DE TRANSFERÊNCIA
+  function copiarPix(chave) {
+    navigator.clipboard.writeText(chave)
+    alert('Chave PIX copiada com sucesso!')
   }
 
   // CONCLUI ATENDIMENTO PERMITINDO INSERIR VALOR MANUALMENTE
@@ -216,7 +201,6 @@ function App() {
             valor: valorFinal 
           })
         } else {
-          // Se for cliente fixo sem documento criado ainda, salva como concluído direto
           await addDoc(collection(db, 'agendamentos'), {
             cliente: item.cliente,
             telefone: 'Cliente Fixo',
@@ -235,7 +219,6 @@ function App() {
     }
   }
 
-  // REMOVE AGENDAMENTO DA NUVEM (LIBERA O HORÁRIO NO SITE PARA TODOS)
   async function cancelarAgendamento(idParaRemover) {
     const confirmar = window.confirm('Tem certeza que deseja cancelar este agendamento? O horário ficará livre novamente no site para todos.')
     if (confirmar) {
@@ -248,7 +231,6 @@ function App() {
     }
   }
 
-  // LIBERA HORÁRIO DE CLIENTE FIXO CRIANDO UM BLOQUEIO DE CANCELAMENTO
   async function liberarHorarioFixo(fixoObj) {
     const confirmar = window.confirm(`Deseja cancelar o horário do cliente fixo (${fixoObj.cliente}) no dia selecionado e liberar para o site?`)
     if (confirmar) {
@@ -271,7 +253,7 @@ function App() {
   }
 
   function enviarNotificacaoWhats() {
-    const numeroWhats = whatsAppBarbeiros[barbeiroSelecionado]
+    const infoBarbeiro = dadosBarbeiros[barbeiroSelecionado]
     const listaNomesServicos = carrinho.map(s => s.nome).join(', ')
     const textoMensagem = `✂️ *NOVO AGENDAMENTO PELO SITE* ✂️\n\n` +
       `👤 *Cliente:* ${nomeCliente}\n` +
@@ -282,9 +264,10 @@ function App() {
       `📅 *Data:* ${formatarData(dataSelecionada)}\n` +
       `🕒 *Horário:* às ${horarioSelecionado}\n` +
       `----------------------------------\n` +
-      `💰 *Valor Total Somado:* R$ ${totalPreco},00\n\n` +
-      `_Por favor, reserve essa vaga na sua bancada!_`
-    const linkOficial = `https://api.whatsapp.com/send?phone=${numeroWhats}&text=${encodeURIComponent(textoMensagem)}`
+      `💰 *Valor Total:* R$ ${totalPreco},00\n` +
+      `💵 *Sinal Efetuado:* R$ 10,00 (PIX)\n\n` +
+      `_Estou enviando o comprovante de R$ 10,00 em anexo para confirmar a reserva da minha vaga!_`
+    const linkOficial = `https://api.whatsapp.com/send?phone=${infoBarbeiro.whats}&text=${encodeURIComponent(textoMensagem)}`
     window.open(linkOficial, '_blank')
   }
 
@@ -335,9 +318,7 @@ function App() {
     return false
   }
 
-  // CHECA SE O HORÁRIO ESTÁ OCUPADO (POR SITE, POR FIXO OU SE FOI CANCELADO)
   function checarHorarioOcupado(horario) {
-    // 1. Checa agendamentos normais ou cancelamento de fixos no banco
     const registroNuvem = listaAgendamentos.find(item => 
       item.data === dataSelecionada && 
       item.barbeiro === barbeiroSelecionado && 
@@ -346,12 +327,11 @@ function App() {
 
     if (registroNuvem) {
       if (registroNuvem.status === 'fixo_cancelado') {
-        return { ocupado: false, motivo: '' } // Se o fixo foi cancelado, libera pro site!
+        return { ocupado: false, motivo: '' }
       }
       return { ocupado: true, motivo: registroNuvem.cliente }
     }
 
-    // 2. Checa se é um cliente fixo do Brendon
     if (barbeiroSelecionado === 'Brendon' && dataSelecionada) {
       const [ano, mes, dia] = dataSelecionada.split('-').map(Number)
       const dataObj = new Date(ano, mes - 1, dia)
@@ -580,20 +560,51 @@ function App() {
         </div>
       )}
 
-      {/* PASSO 4 */}
+      {/* PASSO 4: IDENTIFICAÇÃO E PAGAMENTO DO SINAL */}
       {passo === 4 && (
         <div className="card-secao conteudo-passo">
           <div className="resumo-escolhas">
             <p>Serviço(s): <strong>{carrinho.map(s => s.nome).join(', ')}</strong></p>
             <p>Barbeiro: <strong>{barbeiroSelecionado}</strong></p>
             <p>Data e Horário: <strong>{formatarData(dataSelecionada)} às {horarioSelecionado}</strong></p>
-            <p>Total: <strong>R$ {totalPreco},00</strong></p>
+            <p>Total do Atendimento: <strong>R$ {totalPreco},00</strong></p>
           </div>
+
           <h3>Para quem é o agendamento?</h3>
           <form onSubmit={finalizarAgendamento} className="formulario-cliente">
-            <input type="text" placeholder="Nome Completo" value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} />
-            <input type="tel" placeholder="Telefone (WhatsApp)" value={telefoneCliente} onChange={(e) => setTelefoneCliente(e.target.value)} />
-            <button type="submit" className="btn-confirmar">Confirmar Agendamento 📅</button>
+            <input type="text" placeholder="Seu Nome Completo" value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} />
+            <input type="tel" placeholder="Seu Telefone (WhatsApp)" value={telefoneCliente} onChange={(e) => setTelefoneCliente(e.target.value)} />
+
+            {/* CAIXA DE SINAL PIX */}
+            <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginTop: '15px', border: '1px solid #eccc68', textAlign: 'left' }}>
+              <h4 style={{ color: '#eccc68', margin: '0 0 8px 0', fontSize: '14px' }}>📌 Garantia de Reserva (Sinal de R$ 10,00)</h4>
+              <p style={{ fontSize: '11px', color: '#ccc', margin: '0 0 10px 0' }}>
+                Para confirmar a sua vaga na bancada, faça o envio do sinal de <strong>R$ 10,00</strong> via PIX. Esse valor é <strong>descontado do total</strong> do seu corte na barbearia!
+              </p>
+
+              <div style={{ backgroundColor: '#222', padding: '10px', borderRadius: '6px', fontSize: '12px', marginBottom: '10px' }}>
+                <p style={{ margin: '0 0 4px 0' }}><strong>Titular:</strong> {dadosBarbeiros[barbeiroSelecionado]?.titular}</p>
+                <p style={{ margin: '0 0 8px 0' }}><strong>Chave PIX (Celular):</strong> {dadosBarbeiros[barbeiroSelecionado]?.pix}</p>
+                <button 
+                  type="button"
+                  onClick={() => copiarPix(dadosBarbeiros[barbeiroSelecionado]?.pix)}
+                  style={{ backgroundColor: '#eccc68', color: '#000', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}
+                >
+                  📋 Copiar Chave PIX
+                </button>
+              </div>
+
+              {/* POLÍTICA DE CANCELAMENTO */}
+              <div style={{ backgroundColor: '#2b1b1b', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff4757' }}>
+                <p style={{ fontSize: '10px', color: '#ff7979', margin: 0, lineHeight: '1.3' }}>
+                  ⚠️ <strong>Aviso de Reserva:</strong> Em caso de desistência com menos de 2 horas de antecedência ou não comparecimento, o valor do sinal não será reembolsado para cobrir a reserva do horário.
+                </p>
+              </div>
+            </div>
+
+            <button type="submit" className="btn-confirmar" style={{ marginTop: '15px' }}>
+              Avançar e Enviar Comprovante 📲
+            </button>
           </form>
           <button className="btn-voltar" onClick={() => setPasso(3)}>Voltar</button>
         </div>
@@ -602,9 +613,16 @@ function App() {
       {/* PASSO 5 */}
       {passo === 5 && (
         <div className="card-sucesso conteudo-passo">
-          <h2>🔔 Agendamento Recebido!</h2>
-          <button className="btn-enviar-whats-notificacao" onClick={enviarNotificacaoWhats}>Enviar Confirmação 💬</button>
-          <button className="btn-voltar" onClick={() => { setPasso(1); setCarrinho([]); setDataSelecionada(''); setNomeCliente(''); setTelefoneCliente(''); }}>Novo Agendamento</button>
+          <h2>🔔 Agendamento Reservado!</h2>
+          <p style={{ fontSize: '13px', color: '#ccc', marginBottom: '20px' }}>
+            Clique no botão abaixo para abrir o WhatsApp do barbeiro e <strong>enviar a mensagem junto com o comprovante de R$ 10,00</strong>!
+          </p>
+          <button className="btn-enviar-whats-notificacao" onClick={enviarNotificacaoWhats}>
+            Enviar Comprovante no WhatsApp 💬
+          </button>
+          <button className="btn-voltar" style={{ marginTop: '15px' }} onClick={() => { setPasso(1); setCarrinho([]); setDataSelecionada(''); setNomeCliente(''); setTelefoneCliente(''); }}>
+            Novo Agendamento
+          </button>
         </div>
       )}
 
@@ -769,7 +787,8 @@ function App() {
                         )}
                       </div>
                       <p>📱 Whats: {item.telefone}</p>
-                      <p>📦 {item.servicos} | 💰 Valor Sugerido: R$ {item.valor},00</p>
+                      <p>📦 {item.servicos} | 💰 Valor Total: R$ {item.valor},00</p>
+                      <p style={{ color: '#eccc68', fontSize: '11px' }}>💵 Sinal Pago: {item.sinal || 'R$ 10,00'}</p>
                     </div>
                     
                     <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
