@@ -116,8 +116,8 @@ function App() {
       return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']
     }
 
-    if (diaSemana === 0) return [] // Domingo (Folga)
-    if (diaSemana === 1) return [] // Segunda-feira (Folga)
+    if (diaSemana === 0) return [] // Domingo (Folga do Brendon)
+    if (diaSemana === 1) return [] // Segunda-feira (Folga do Brendon)
     if (diaSemana === 2) return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
     if (diaSemana === 3) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
     if (diaSemana === 4) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
@@ -535,7 +535,11 @@ function App() {
               if (listaHorarios.length === 0) {
                 return (
                   <div className="aviso-fechado" style={{ marginTop: '15px' }}>
-                    <p>😴 O profissional está de folga nesta data!</p>
+                    {barbeiroSelecionado === 'Brendon' ? (
+                      <p>😴 O Brendon está de folga nesta data! Atendimentos apenas de terça a sábado.</p>
+                    ) : (
+                      <p>😴 O profissional está de folga nesta data!</p>
+                    )}
                   </div>
                 )
               }
