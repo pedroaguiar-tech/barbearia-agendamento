@@ -58,7 +58,7 @@ function App() {
 
   // 📋 TABELA DE SERVIÇOS
   const tabelaServicos = [
-    { id: 1, nome: 'Corte', preco: 40, duracao: '1h', imagem: '/corte.jpeg' },
+    { id: 1, nome: 'Corte', preco: 40, duracao: '1h', imagem: '/corte.jpeg', promo: true },
     { id: 2, nome: 'Luzes', preco: 60, duracao: '1h', imagem: '/luzes.jpeg' },
     { id: 3, nome: 'Botox', preco: 70, duracao: '1h', imagem: '' },
     { id: 4, nome: 'Nevou', preco: 70, duracao: '1h', imagem: '' }, 
@@ -94,6 +94,26 @@ function App() {
     { diaSemana: 6, horario: '11:00', cliente: 'Davi Primo (Fixo)' },
     { diaSemana: 6, horario: '18:00', cliente: 'Paulo (Fixo)' },
   ]
+
+  // Função auxiliar para saber se o dia escolhido é Terça (2) ou Quarta (3)
+  function ehDiaPromocional(dataStr) {
+    if (!dataStr) return false
+    const [ano, mes, dia] = dataStr.split('-').map(Number)
+    const diaSemana = new Date(ano, mes - 1, dia).getDay()
+    return diaSemana === 2 || diaSemana === 3 // Terça ou Quarta
+  }
+
+  // Cálculo total considerando a promoção do Corte de Terça e Quarta
+  function calcularTotalFinal() {
+    return carrinho.reduce((soma, item) => {
+      if (item.nome === 'Corte' && ehDiaPromocional(dataSelecionada)) {
+        return soma + 35
+      }
+      return soma + item.preco
+    }, 0)
+  }
+
+  const totalPreco = calcularTotalFinal()
 
   function ehUltimoSabadoDoMes(dataStr) {
     if (!dataStr) return false
@@ -140,8 +160,6 @@ function App() {
       setCarrinho([...carrinho, servico])
     }
   }
-
-  const totalPreco = carrinho.reduce((soma, item) => soma + item.preco, 0)
 
   function selecionarBarbeiro(nome) {
     setBarbeiroSelecionado(nome)
@@ -283,12 +301,10 @@ function App() {
     const agora = new Date()
     const hoje = new Date(agora)
 
-    // Se é quarta-feira a partir das 21:00, libera o lote de quinta em diante
     if (agora.getDay() === 3 && agora.getHours() >= 21) {
       hoje.setDate(hoje.getDate() + 1)
     }
 
-    // Se é domingo a partir das 21:00, libera o lote do início da semana
     if (agora.getDay() === 0 && agora.getHours() >= 21) {
       hoje.setDate(hoje.getDate() + 1)
     }
@@ -456,8 +472,20 @@ function App() {
                   <div className="servico-bloco-esquerdo">
                     {servico.imagem ? <img src={servico.imagem} alt={servico.nome} className="servico-img-miniatura" /> : <div className="servico-img-placeholder">✂️</div>}
                     <div className="servico-info">
-                      <h3>{servico.nome}</h3>
+                      <h3>
+                        {servico.nome} 
+                        {servico.promo && (
+                          <span style={{ fontSize: '10px', backgroundColor: '#eccc68', color: '#000', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px', fontWeight: 'bold' }}>
+                            🔥 PROMO TER / QUA
+                          </span>
+                        )}
+                      </h3>
                       <p>⏰ Duração: {servico.duracao}</p>
+                      {servico.promo && (
+                        <p style={{ fontSize: '10px', color: '#2ed573', fontWeight: 'bold', margin: '2px 0 0 0' }}>
+                          Terça e Quarta por R$ 35,00!
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="servico-preco-acao">
@@ -474,7 +502,7 @@ function App() {
             <div className="barra-carrinho-fixa">
               <div className="info-carrinho">
                 <span className="qtd-itens">{carrinho.length} {carrinho.length === 1 ? 'serviço' : 'serviços'} selecionado(s)</span>
-                <span className="valor-total-carrinho">Total: <strong>R$ {totalPreco},00</strong></span>
+                <span className="valor-total-carrinho">Subtotal: <strong>R$ {carrinho.reduce((s, i) => s + i.preco, 0)},00</strong></span>
               </div>
               <button className="btn-avancar-fluxo" onClick={() => setPasso(2)}>Escolher Barbeiro ➔</button>
             </div>
@@ -518,6 +546,12 @@ function App() {
             onChange={(e) => setDataSelecionada(e.target.value)} 
           />
 
+          {dataSelecionada && carrinho.some(i => i.nome === 'Corte') && ehDiaPromocional(dataSelecionada) && (
+            <div style={{ backgroundColor: '#1b3b22', border: '1px solid #2ed573', padding: '10px', borderRadius: '8px', margin: '10px 0', fontSize: '12px', color: '#2ed573', fontWeight: 'bold' }}>
+              🎉 Desconto Aplicado! Promoção de Terça/Quarta: Corte por apenas R$ 35,00!
+            </div>
+          )}
+
           {(() => {
             const estaBloqueado = verificarDiaBloqueado(dataSelecionada);
 
@@ -533,10 +567,17 @@ function App() {
               const listaHorarios = obterHorariosDisponiveis(barbeiroSelecionado, dataSelecionada);
 
               if (listaHorarios.length === 0) {
+                const [ano, mes, dia] = dataSelecionada.split('-').map(Number)
+                const diaSemanaSel = new Date(ano, mes - 1, dia).getDay()
+
                 return (
                   <div className="aviso-fechado" style={{ marginTop: '15px' }}>
                     {barbeiroSelecionado === 'Brendon' ? (
-                      <p>😴 O Brendon está de folga nesta data! Atendimentos apenas de terça a sábado.</p>
+                      diaSemanaSel === 0 ? (
+                        <p>😴 O Brendon não atende aos domingos! Atendimentos de terça a sábado.</p>
+                      ) : (
+                        <p>😴 O Brendon está de folga na segunda-feira! Atendimentos de terça a sábado.</p>
+                      )
                     ) : (
                       <p>😴 O profissional está de folga nesta data!</p>
                     )}
@@ -583,7 +624,7 @@ function App() {
             <p>Serviço(s): <strong>{carrinho.map(s => s.nome).join(', ')}</strong></p>
             <p>Barbeiro: <strong>{barbeiroSelecionado}</strong></p>
             <p>Data e Horário: <strong>{formatarData(dataSelecionada)} às {horarioSelecionado}</strong></p>
-            <p>Total do Atendimento: <strong>R$ {totalPreco},00</strong></p>
+            <p>Total do Atendimento: <strong>R$ {totalPreco},00</strong> {carrinho.some(i => i.nome === 'Corte') && ehDiaPromocional(dataSelecionada) && '(com desconto promo)'}</p>
           </div>
 
           <h3>Para quem é o agendamento?</h3>
