@@ -116,7 +116,7 @@ function App() {
       return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']
     }
 
-    if (diaSemana === 0) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00']
+    if (diaSemana === 0) return [] // Domingo (Folga)
     if (diaSemana === 1) return [] // Segunda-feira (Folga)
     if (diaSemana === 2) return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
     if (diaSemana === 3) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
@@ -280,7 +280,19 @@ function App() {
   function verificarDiaBloqueado(dataString) {
     if (!dataString) return false
 
-    const hoje = new Date()
+    const agora = new Date()
+    const hoje = new Date(agora)
+
+    // Se é quarta-feira a partir das 21:00, libera o lote de quinta em diante
+    if (agora.getDay() === 3 && agora.getHours() >= 21) {
+      hoje.setDate(hoje.getDate() + 1)
+    }
+
+    // Se é domingo a partir das 21:00, libera o lote do início da semana
+    if (agora.getDay() === 0 && agora.getHours() >= 21) {
+      hoje.setDate(hoje.getDate() + 1)
+    }
+
     hoje.setHours(0, 0, 0, 0)
 
     const [ano, mes, dia] = dataString.split('-').map(Number)
