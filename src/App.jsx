@@ -301,10 +301,12 @@ function App() {
     const agora = new Date()
     const hoje = new Date(agora)
 
+    // Se é quarta-feira a partir das 21:00, libera o lote de quinta em diante
     if (agora.getDay() === 3 && agora.getHours() >= 21) {
       hoje.setDate(hoje.getDate() + 1)
     }
 
+    // Se é domingo a partir das 21:00, libera o lote do início da semana
     if (agora.getDay() === 0 && agora.getHours() >= 21) {
       hoje.setDate(hoje.getDate() + 1)
     }
@@ -315,10 +317,7 @@ function App() {
     const dataAlvo = new Date(ano, mes - 1, dia)
     dataAlvo.setHours(0, 0, 0, 0)
 
-    if (dataAlvo.getMonth() !== hoje.getMonth() || dataAlvo.getFullYear() !== hoje.getFullYear()) {
-      return true
-    }
-
+    // Não permite datas passadas
     if (dataAlvo < hoje) {
       return true
     }
@@ -339,6 +338,7 @@ function App() {
       fimJanela.setDate(hoje.getDate() + diasAteDomingo)
     }
 
+    // Se a data selecionada estiver fora da janela permitida, bloqueia
     if (dataAlvo < inicioJanela || dataAlvo > fimJanela) {
       return true
     }
@@ -558,7 +558,7 @@ function App() {
             if (dataSelecionada && estaBloqueado) {
               return (
                 <div className="aviso-fechado">
-                  <p>🚫 Agenda indisponível! Só é possível escolher os dias liberados desta semana dentro do mês atual.</p>
+                  <p>🚫 Agenda indisponível! Só é possível escolher os dias liberados desta semana.</p>
                 </div>
               );
             }
