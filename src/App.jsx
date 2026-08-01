@@ -86,7 +86,7 @@ function App() {
     { diaSemana: 3, horario: '19:00', cliente: 'Celso (Fixo)' },
     { diaSemana: 4, horario: '13:00', cliente: 'Fabricio (Fixo)' },
     { diaSemana: 5, horario: '09:00', cliente: 'Diego (Fixo)' },
-    { diaSemana: 5, horario: '10:00', cliente: 'Alemão (Fixo)' }, // 👈 Adicionado Alemão na Sexta às 10h
+    { diaSemana: 5, horario: '10:00', cliente: 'Alemão (Fixo)' },
     { diaSemana: 5, horario: '13:00', cliente: 'Roger (Fixo)' },
     { diaSemana: 5, horario: '17:00', cliente: 'Raul (Fixo)' },
     { diaSemana: 5, horario: '18:00', cliente: 'Pedrão (Fixo)' },
@@ -140,7 +140,7 @@ function App() {
     if (diaSemana === 2) return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
     if (diaSemana === 3) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
     if (diaSemana === 4) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
-    if (diaSemana === 5) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'] // 👈 Retirados 22h e 23h na Sexta
+    if (diaSemana === 5) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
     if (diaSemana === 6) {
       if (ehUltimoSabadoDoMes(dataStr)) {
         return ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
@@ -747,32 +747,32 @@ function App() {
                 {linhaDoTempoHoje.map((slot, idx) => (
                   <div key={idx} style={{ 
                     display: 'flex', 
-                    justify: 'space-between', 
+                    justifyContent: 'space-between', 
                     alignItems: 'center', 
-                    backgroundColor: slot.status === 'concluido' ? '#1b3b22' : slot.type === 'Livre' ? '#1a1a1a' : '#222', 
+                    backgroundColor: slot.status === 'concluido' ? '#1b3b22' : slot.tipo === 'Livre' ? '#1a1a1a' : '#222', 
                     padding: '10px 14px', 
                     borderRadius: '8px', 
                     marginBottom: '8px',
-                    borderLeft: slot.type === 'Fixo' ? '4px solid #ffa502' : slot.type === 'Site' ? '4px solid #1e90ff' : '4px solid #444'
+                    borderLeft: slot.tipo === 'Fixo' ? '4px solid #ffa502' : slot.tipo === 'Site' ? '4px solid #1e90ff' : '4px solid #444'
                   }}>
                     <div>
-                      <strong style={{ fontSize: '14px', color: '#fff' }}>{slot.horario}</strong> - <span style={{ fontSize: '13px', color: slot.type === 'Livre' ? '#666' : '#fff' }}>{slot.cliente}</span>
-                      {slot.type !== 'Livre' && (
+                      <strong style={{ fontSize: '14px', color: '#fff' }}>{slot.horario}</strong> - <span style={{ fontSize: '13px', color: slot.tipo === 'Livre' ? '#666' : '#fff' }}>{slot.cliente}</span>
+                      {slot.tipo !== 'Livre' && (
                         <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>
-                          Tipo: {slot.type} {slot.item?.telefone ? `| Whats: ${slot.item.telefone}` : ''}
+                          Tipo: {slot.tipo} {slot.item?.telefone ? `| Whats: ${slot.item.telefone}` : ''}
                         </div>
                       )}
                     </div>
 
                     <div>
-                      {slot.type === 'Site' && slot.status !== 'concluido' && (
+                      {slot.tipo === 'Site' && slot.status !== 'concluido' && (
                         <div style={{ display: 'flex', gap: '4px' }}>
                           <button onClick={() => concluirAtendimento(slot.item)} style={{ backgroundColor: '#2ed573', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>Concluir 💵</button>
                           <button onClick={() => cancelarAgendamento(slot.item.id)} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px' }}>Desistiu ❌</button>
                         </div>
                       )}
 
-                      {slot.type === 'Fixo' && (
+                      {slot.tipo === 'Fixo' && (
                         <div style={{ display: 'flex', gap: '4px' }}>
                           <button onClick={() => concluirAtendimento({ cliente: slot.cliente, valor: 40, horario: slot.horario })} style={{ backgroundColor: '#2ed573', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>Concluir 💵</button>
                           <button onClick={() => liberarHorarioFixo(slot.item)} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px' }}>Desistiu ❌</button>
@@ -796,4 +796,4 @@ function App() {
   )
 }
 
-export default AppS
+export default App
