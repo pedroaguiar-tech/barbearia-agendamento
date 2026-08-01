@@ -38,7 +38,7 @@ function App() {
   const [senhaInput, setSenhaInput] = useState('')
   const [autenticado, setAutenticado] = useState(false)
   const [barbeiroPainel, setBarbeiroPainel] = useState('Brendon')
-  const [dataFiltroDesempenho, setDataFiltroDesempenho] = useState(new Date().toISOString().split('T')[0])
+  const [dataFiltroPainel, setDataFiltroPainel] = useState(new Date().toISOString().split('T')[0])
 
   const SENHA_BARBEIRO = 'castrobarber'
 
@@ -86,6 +86,7 @@ function App() {
     { diaSemana: 3, horario: '19:00', cliente: 'Celso (Fixo)' },
     { diaSemana: 4, horario: '13:00', cliente: 'Fabricio (Fixo)' },
     { diaSemana: 5, horario: '09:00', cliente: 'Diego (Fixo)' },
+    { diaSemana: 5, horario: '10:00', cliente: 'Alemão (Fixo)' }, // 👈 Adicionado Alemão na Sexta às 10h
     { diaSemana: 5, horario: '13:00', cliente: 'Roger (Fixo)' },
     { diaSemana: 5, horario: '17:00', cliente: 'Raul (Fixo)' },
     { diaSemana: 5, horario: '18:00', cliente: 'Pedrão (Fixo)' },
@@ -95,15 +96,13 @@ function App() {
     { diaSemana: 6, horario: '18:00', cliente: 'Paulo (Fixo)' },
   ]
 
-  // Função auxiliar para saber se o dia escolhido é Terça (2) ou Quarta (3)
   function ehDiaPromocional(dataStr) {
     if (!dataStr) return false
     const [ano, mes, dia] = dataStr.split('-').map(Number)
     const diaSemana = new Date(ano, mes - 1, dia).getDay()
-    return diaSemana === 2 || diaSemana === 3 // Terça ou Quarta
+    return diaSemana === 2 || diaSemana === 3
   }
 
-  // Cálculo total considerando a promoção do Corte de Terça e Quarta
   function calcularTotalFinal() {
     return carrinho.reduce((soma, item) => {
       if (item.nome === 'Corte' && ehDiaPromocional(dataSelecionada)) {
@@ -141,7 +140,7 @@ function App() {
     if (diaSemana === 2) return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
     if (diaSemana === 3) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
     if (diaSemana === 4) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
-    if (diaSemana === 5) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00']
+    if (diaSemana === 5) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'] // 👈 Retirados 22h e 23h na Sexta
     if (diaSemana === 6) {
       if (ehUltimoSabadoDoMes(dataStr)) {
         return ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
@@ -171,7 +170,6 @@ function App() {
     setPasso(4)
   }
 
-  // SALVA O NOVO AGENDAMENTO NA NUVEM
   async function finalizarAgendamento(e) {
     e.preventDefault()
     if (nomeCliente.trim() === '' || telefoneCliente.trim() === '') {
@@ -199,13 +197,11 @@ function App() {
     }
   }
 
-  // COPIA CHAVE PIX PARA A ÁREA DE TRANSFERÊNCIA
   function copiarPix(chave) {
     navigator.clipboard.writeText(chave)
     alert('Chave PIX copiada com sucesso!')
   }
 
-  // CONCLUI ATENDIMENTO PERMITINDO INSERIR VALOR MANUALMENTE
   async function concluirAtendimento(item) {
     const valorDigitado = prompt(`Confirmar conclusão do corte de ${item.cliente}.\nQual foi o valor cobrado (R$)?`, item.valor || 40)
     
@@ -223,7 +219,7 @@ function App() {
             cliente: item.cliente,
             telefone: 'Cliente Fixo',
             barbeiro: 'Brendon',
-            data: dataSelecionada || new Date().toISOString().split('T')[0],
+            data: dataFiltroPainel,
             horario: item.horario || 'Fixo',
             servicos: 'Atendimento Fixo',
             valor: valorFinal,
@@ -257,7 +253,7 @@ function App() {
           cliente: `${fixoObj.cliente} (CANCELADO)`,
           telefone: 'Fixo Liberado',
           barbeiro: 'Brendon',
-          data: dataSelecionada || new Date().toISOString().split('T')[0],
+          data: dataFiltroPainel,
           horario: fixoObj.horario,
           servicos: 'Fixo Cancelado',
           valor: 0,
@@ -301,12 +297,10 @@ function App() {
     const agora = new Date()
     const hoje = new Date(agora)
 
-    // Se é quarta-feira a partir das 21:00, libera o lote de quinta em diante
     if (agora.getDay() === 3 && agora.getHours() >= 21) {
       hoje.setDate(hoje.getDate() + 1)
     }
 
-    // Se é domingo a partir das 21:00, libera o lote do início da semana
     if (agora.getDay() === 0 && agora.getHours() >= 21) {
       hoje.setDate(hoje.getDate() + 1)
     }
@@ -317,7 +311,6 @@ function App() {
     const dataAlvo = new Date(ano, mes - 1, dia)
     dataAlvo.setHours(0, 0, 0, 0)
 
-    // Não permite datas passadas
     if (dataAlvo < hoje) {
       return true
     }
@@ -338,7 +331,6 @@ function App() {
       fimJanela.setDate(hoje.getDate() + diasAteDomingo)
     }
 
-    // Se a data selecionada estiver fora da janela permitida, bloqueia
     if (dataAlvo < inicioJanela || dataAlvo > fimJanela) {
       return true
     }
@@ -385,34 +377,17 @@ function App() {
     }
   }
 
-  // 📊 CÁLCULOS DO DASHBOARD E DESEMPENHO NA NUVEM
+  // 📊 CÁLCULOS DO DASHBOARD E DESEMPENHO DO PAINEL
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
   const dataHojeString = hoje.toISOString().split('T')[0]
   const mesAtual = hoje.getMonth()
-
-  const diaSemanaHoje = hoje.getDay()
-  const segSemana = new Date(hoje)
-  const difSeg = diaSemanaHoje === 0 ? -6 : 1 - diaSemanaHoje
-  segSemana.setDate(hoje.getDate() + difSeg)
-
-  const domSemana = new Date(segSemana)
-  domSemana.setDate(segSemana.getDate() + 6)
 
   const agendamentosBarbeiro = listaAgendamentos.filter(item => item.barbeiro === barbeiroPainel && item.status !== 'fixo_cancelado')
   const agendamentosConcluidos = agendamentosBarbeiro.filter(item => item.status === 'concluido')
 
   const faturamentoHoje = agendamentosConcluidos
     .filter(item => item.data === dataHojeString)
-    .reduce((total, item) => total + item.valor, 0)
-
-  const faturamentoSemanal = agendamentosConcluidos
-    .filter(item => {
-      const [ano, mes, dia] = item.data.split('-').map(Number)
-      const dataItem = new Date(ano, mes - 1, dia)
-      dataItem.setHours(0, 0, 0, 0)
-      return dataItem >= segSemana && dataItem <= domSemana
-    })
     .reduce((total, item) => total + item.valor, 0)
 
   const faturamentoMes = agendamentosConcluidos
@@ -422,19 +397,40 @@ function App() {
     })
     .reduce((total, item) => total + item.valor, 0)
 
-  const totalAtendimentosConcluidos = agendamentosConcluidos.length
+  // 🗓️ CONSTRUÇÃO DA LINHA DO TEMPO DIÁRIA PARA O PAINEL ORGANIZADO
+  function obterLinhaDoTempoDoDia() {
+    if (!dataFiltroPainel) return []
+    const [ano, mes, dia] = dataFiltroPainel.split('-').map(Number)
+    const dataObj = new Date(ano, mes - 1, dia)
+    const diaSemana = dataObj.getDay()
 
-  const concluidosNaDataFiltro = agendamentosConcluidos.filter(item => item.data === dataFiltroDesempenho)
-  const faturamentoDataFiltro = concluidosNaDataFiltro.reduce((total, item) => total + item.valor, 0)
-  const cortesDataFiltro = concluidosNaDataFiltro.length
+    const todosHorariosDia = obterHorariosDisponiveis(barbeiroPainel, dataFiltroPainel)
+    
+    return todosHorariosDia.map(horario => {
+      // 1. Procura no Firebase
+      const regNuvem = listaAgendamentos.find(item => 
+        item.data === dataFiltroPainel && 
+        item.barbeiro === barbeiroPainel && 
+        item.horario === horario
+      )
 
-  const diasTrabalhadosNoMes = new Set(
-    agendamentosConcluidos
-      .filter(item => (Number(item.data.split('-')[1]) - 1) === mesAtual)
-      .map(item => item.data)
-  ).size
+      if (regNuvem && regNuvem.status !== 'fixo_cancelado') {
+        return { horario, cliente: regNuvem.cliente, tipo: 'Site', status: regNuvem.status, item: regNuvem }
+      }
 
-  const mediaDiariaMes = diasTrabalhadosNoMes > 0 ? (faturamentoMes / diasTrabalhadosNoMes) : 0
+      // 2. Procura nos Fixos do Brendon
+      if (barbeiroPainel === 'Brendon') {
+        const fixo = clientesFixosBrendon.find(f => f.diaSemana === diaSemana && f.horario === horario)
+        if (fixo && (!regNuvem || regNuvem.status !== 'fixo_cancelado')) {
+          return { horario, cliente: fixo.cliente, tipo: 'Fixo', status: 'fixo', item: fixo }
+        }
+      }
+
+      return { horario, cliente: 'Livre / Disponível', tipo: 'Livre', status: 'livre', item: null }
+    })
+  }
+
+  const linhaDoTempoHoje = obterLinhaDoTempoDoDia()
 
   return (
     <div className="container" style={{ paddingBottom: passo === 1 && carrinho.length > 0 ? '100px' : '20px' }}>
@@ -617,14 +613,14 @@ function App() {
         </div>
       )}
 
-      {/* PASSO 4: IDENTIFICAÇÃO E PAGAMENTO DO SINAL */}
+      {/* PASSO 4 */}
       {passo === 4 && (
         <div className="card-secao conteudo-passo">
           <div className="resumo-escolhas">
             <p>Serviço(s): <strong>{carrinho.map(s => s.nome).join(', ')}</strong></p>
             <p>Barbeiro: <strong>{barbeiroSelecionado}</strong></p>
             <p>Data e Horário: <strong>{formatarData(dataSelecionada)} às {horarioSelecionado}</strong></p>
-            <p>Total do Atendimento: <strong>R$ {totalPreco},00</strong> {carrinho.some(i => i.nome === 'Corte') && ehDiaPromocional(dataSelecionada) && '(com desconto promo)'}</p>
+            <p>Total do Atendimento: <strong>R$ {totalPreco},00</strong></p>
           </div>
 
           <h3>Para quem é o agendamento?</h3>
@@ -632,7 +628,6 @@ function App() {
             <input type="text" placeholder="Seu Nome Completo" value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} />
             <input type="tel" placeholder="Seu Telefone (WhatsApp)" value={telefoneCliente} onChange={(e) => setTelefoneCliente(e.target.value)} />
 
-            {/* CAIXA DE SINAL PIX */}
             <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginTop: '15px', border: '1px solid #eccc68', textAlign: 'left' }}>
               <h4 style={{ color: '#eccc68', margin: '0 0 8px 0', fontSize: '14px' }}>📌 Garantia de Reserva (Sinal de R$ 10,00)</h4>
               <p style={{ fontSize: '11px', color: '#ccc', margin: '0 0 10px 0' }}>
@@ -651,10 +646,9 @@ function App() {
                 </button>
               </div>
 
-              {/* POLÍTICA DE CANCELAMENTO */}
               <div style={{ backgroundColor: '#2b1b1b', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #ff4757' }}>
                 <p style={{ fontSize: '10px', color: '#ff7979', margin: 0, lineHeight: '1.3' }}>
-                  ⚠️ <strong>Aviso de Reserva:</strong> Em caso de desistência com menos de 2 horas de antecedência ou não comparecimento, o valor do sinal não será reembolsado para cobrir a reserva do horário.
+                  ⚠️ <strong>Aviso de Reserva:</strong> Em caso de desistência com menos de 2 horas de antecedência ou não comparecimento, o valor do sinal não será reembolsado.
                 </p>
               </div>
             </div>
@@ -672,7 +666,7 @@ function App() {
         <div className="card-sucesso conteudo-passo">
           <h2>🔔 Agendamento Reservado!</h2>
           <p style={{ fontSize: '13px', color: '#ccc', marginBottom: '20px' }}>
-            Clique no botão abaixo para abrir o WhatsApp do barbeiro e <strong>enviar a mensagem junto com o comprovante de R$ 10,00</strong>!
+            Clique no botão abaixo para abrir o WhatsApp do barbeiro e <strong>enviar o comprovante de R$ 10,00</strong>!
           </p>
           <button className="btn-enviar-whats-notificacao" onClick={enviarNotificacaoWhats}>
             Enviar Comprovante no WhatsApp 💬
@@ -683,7 +677,7 @@ function App() {
         </div>
       )}
 
-      {/* 🔒 PASSO 6: PAINEL DO BARBEIRO (SINCRONIZADO NA NUVEM) */}
+      {/* 🔒 PASSO 6: PAINEL ORGANIZADO DO BARBEIRO */}
       {passo === 6 && (
         <div className="card-secao conteudo-passo">
           {!autenticado ? (
@@ -703,176 +697,94 @@ function App() {
             </div>
           ) : (
             <div className="painel-barbeiro-logado">
-              <h2>Painel de Gestão 💈</h2>
+              <h2>Agenda do Barbeiro 💈</h2>
               
               <div className="filtros-barbeiro" style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '20px' }}>
                 <button 
                   className={`btn-horario ${barbeiroPainel === 'Brendon' ? 'selecionado' : ''}`}
                   onClick={() => setBarbeiroPainel('Brendon')}
                 >
-                  Agenda do Brendon
+                  Brendon
                 </button>
                 <button 
                   className={`btn-horario ${barbeiroPainel === 'Lucas' ? 'selecionado' : ''}`}
                   onClick={() => setBarbeiroPainel('Lucas')}
                 >
-                  Agenda do Lucas
+                  Lucas
                 </button>
               </div>
 
-              {/* 💵 DASHBOARD GERAL */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(2, 1fr)', 
-                gap: '10px', 
-                marginBottom: '20px' 
-              }}>
-                <div style={{ backgroundColor: '#1e1e1e', padding: '12px', borderRadius: '8px', border: '1px solid #333' }}>
+              {/* 💵 DASHBOARD RAPIDO */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '20px' }}>
+                <div style={{ backgroundColor: '#1e1e1e', padding: '10px', borderRadius: '8px', border: '1px solid #333' }}>
                   <span style={{ fontSize: '11px', color: '#aaa' }}>Hoje 💵</span>
-                  <h3 style={{ margin: '5px 0 0 0', fontSize: '15px', color: '#2ed573' }}>R$ {faturamentoHoje},00</h3>
+                  <h3 style={{ margin: '3px 0 0 0', fontSize: '15px', color: '#2ed573' }}>R$ {faturamentoHoje},00</h3>
                 </div>
-                
-                <div style={{ backgroundColor: '#1e1e1e', padding: '12px', borderRadius: '8px', border: '1px solid #333' }}>
-                  <span style={{ fontSize: '11px', color: '#aaa' }}>Semana 📊</span>
-                  <h3 style={{ margin: '5px 0 0 0', fontSize: '15px', color: '#eccc68' }}>R$ {faturamentoSemanal},00</h3>
-                </div>
-
-                <div style={{ backgroundColor: '#1e1e1e', padding: '12px', borderRadius: '8px', border: '1px solid #333' }}>
+                <div style={{ backgroundColor: '#1e1e1e', padding: '10px', borderRadius: '8px', border: '1px solid #333' }}>
                   <span style={{ fontSize: '11px', color: '#aaa' }}>Mês Atual 🗓️</span>
-                  <h3 style={{ margin: '5px 0 0 0', fontSize: '15px', color: '#1e90ff' }}>R$ {faturamentoMes},00</h3>
-                </div>
-
-                <div style={{ backgroundColor: '#1e1e1e', padding: '12px', borderRadius: '8px', border: '1px solid #333' }}>
-                  <span style={{ fontSize: '11px', color: '#aaa' }}>Cortes Feitos ✂️</span>
-                  <h3 style={{ margin: '5px 0 0 0', fontSize: '15px', color: '#ffa502' }}>{totalAtendimentosConcluidos}</h3>
+                  <h3 style={{ margin: '3px 0 0 0', fontSize: '15px', color: '#1e90ff' }}>R$ {faturamentoMes},00</h3>
                 </div>
               </div>
 
-              {/* 🗓️ CONSULTA E COMPARATIVO DE DESEMPENHO DIÁRIO */}
-              <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '25px', border: '1px solid #333' }}>
-                <h3 style={{ fontSize: '15px', marginBottom: '10px', color: '#eccc68' }}>📅 Consulta de Desempenho por Dia</h3>
-                <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '10px' }}>Escolha um dia no calendário para ver o faturamento e comparar com a média do mês:</p>
-                
+              {/* 📅 SELETOR DE DATA ORGANIZADO */}
+              <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #eccc68', textAlign: 'left' }}>
+                <h3 style={{ fontSize: '14px', color: '#eccc68', margin: '0 0 8px 0' }}>🗓️ Selecione o Dia para Ver a Agenda:</h3>
                 <input 
                   type="date" 
                   className="input-data" 
-                  value={dataFiltroDesempenho} 
-                  onChange={(e) => setDataFiltroDesempenho(e.target.value)}
-                  style={{ marginBottom: '15px' }}
+                  value={dataFiltroPainel} 
+                  onChange={(e) => setDataFiltroPainel(e.target.value)}
+                  style={{ marginBottom: '0px' }}
                 />
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', textAlign: 'center' }}>
-                  <div style={{ backgroundColor: '#222', padding: '10px', borderRadius: '6px' }}>
-                    <span style={{ fontSize: '11px', color: '#aaa' }}>Faturamento do Dia</span>
-                    <h4 style={{ margin: '5px 0 0 0', color: '#2ed573' }}>R$ {faturamentoDataFiltro},00</h4>
-                    <span style={{ fontSize: '10px', color: '#888' }}>{cortesDataFiltro} corte(s)</span>
-                  </div>
-
-                  <div style={{ backgroundColor: '#222', padding: '10px', borderRadius: '6px' }}>
-                    <span style={{ fontSize: '11px', color: '#aaa' }}>Média Diária do Mês</span>
-                    <h4 style={{ margin: '5px 0 0 0', color: '#1e90ff' }}>R$ {mediaDiariaMes.toFixed(0)},00 / dia</h4>
-                    <span style={{ fontSize: '10px', color: '#888' }}>Baseado em {diasTrabalhadosNoMes} dia(s)</span>
-                  </div>
-                </div>
-
-                {faturamentoDataFiltro > 0 && (
-                  <div style={{ marginTop: '12px', fontSize: '12px', fontWeight: 'bold' }}>
-                    {faturamentoDataFiltro > mediaDiariaMes ? (
-                      <span style={{ color: '#2ed573' }}>🚀 Desempenho no dia: ACIMA da sua média mensal!</span>
-                    ) : faturamentoDataFiltro === mediaDiariaMes ? (
-                      <span style={{ color: '#eccc68' }}>⚖️ Desempenho no dia: Na média do mês.</span>
-                    ) : (
-                      <span style={{ color: '#ff4757' }}>📉 Desempenho no dia: Abaixo da sua média mensal.</span>
-                    )}
-                  </div>
-                )}
               </div>
 
-              {/* LISTA DE CLIENTES FIXOS BLOQUEADOS NO PAINEL DO BRENDON */}
-              {barbeiroPainel === 'Brendon' && (
-                <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '25px', border: '1px solid #333', textAlign: 'left' }}>
-                  <h3 style={{ fontSize: '15px', color: '#ffa502', marginBottom: '10px' }}>📌 Clientes Fixos da Semana (Brendon)</h3>
-                  <p style={{ fontSize: '11px', color: '#aaa', marginBottom: '10px' }}>Se um fixo desistir ou cortar, você pode dar baixa ou liberar o horário aqui:</p>
-                  
-                  {clientesFixosBrendon.map((fixo, idx) => {
-                    const diasNomes = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-                    return (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#222', padding: '8px 12px', borderRadius: '6px', marginBottom: '6px', fontSize: '12px' }}>
-                        <span><strong>{diasNomes[fixo.diaSemana]} {fixo.horario}:</strong> {fixo.cliente}</span>
-                        <div style={{ display: 'flex', gap: '5px' }}>
-                          <button 
-                            onClick={() => concluirAtendimento({ cliente: fixo.cliente, valor: 40, horario: fixo.horario })}
-                            style={{ backgroundColor: '#2ed573', color: '#000', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}
-                          >
-                            Concluir 💵
-                          </button>
-                          <button 
-                            onClick={() => liberarHorarioFixo(fixo)}
-                            style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px' }}
-                          >
-                            Desistiu ❌
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+              {/* 🕒 LINHA DO TEMPO DIÁRIA LIMPA E ORGANIZADA */}
+              <div className="lista-agenda-dia" style={{ textAlign: 'left' }}>
+                <h3 style={{ fontSize: '15px', marginBottom: '12px' }}>
+                  Horários do dia ({formatarData(dataFiltroPainel)}):
+                </h3>
 
-              {/* LISTA DE AGENDAMENTOS DO SITE EM TEMPO REAL */}
-              <div className="lista-agenda-dia">
-                <h3>Agendamentos do Site ({barbeiroPainel}):</h3>
-                
-                {agendamentosBarbeiro.map(item => (
-                  <div key={item.id} className="card-servico-item" style={{ 
-                    marginBottom: '12px', 
-                    textAlign: 'left', 
-                    padding: '15px', 
-                    borderRadius: '8px', 
+                {linhaDoTempoHoje.map((slot, idx) => (
+                  <div key={idx} style={{ 
                     display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '8px',
-                    borderColor: item.status === 'concluido' ? '#2ed573' : '' 
+                    justify: 'space-between', 
+                    alignItems: 'center', 
+                    backgroundColor: slot.status === 'concluido' ? '#1b3b22' : slot.type === 'Livre' ? '#1a1a1a' : '#222', 
+                    padding: '10px 14px', 
+                    borderRadius: '8px', 
+                    marginBottom: '8px',
+                    borderLeft: slot.type === 'Fixo' ? '4px solid #ffa502' : slot.type === 'Site' ? '4px solid #1e90ff' : '4px solid #444'
                   }}>
-                    <div className="servico-info">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h4>⏰ {item.horario} - {item.cliente} ({formatarData(item.data)})</h4>
-                        {item.status === 'concluido' && (
-                          <span style={{ fontSize: '11px', color: '#2ed573', backgroundColor: '#1b3b22', padding: '2px 8px', borderRadius: '12px' }}>
-                            ✓ Concluído (R$ {item.valor},00)
-                          </span>
-                        )}
-                      </div>
-                      <p>📱 Whats: {item.telefone}</p>
-                      <p>📦 {item.servicos} | 💰 Valor Total: R$ {item.valor},00</p>
-                      <p style={{ color: '#eccc68', fontSize: '11px' }}>💵 Sinal Pago: {item.sinal || 'R$ 10,00'}</p>
-                    </div>
-                    
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '5px' }}>
-                      {item.status !== 'concluido' && (
-                        <button 
-                          onClick={() => concluirAtendimento(item)}
-                          className="btn-adicionar-item"
-                          style={{ flex: 1, padding: '8px', fontSize: '12px' }}
-                        >
-                          Concluir Corte ✂️
-                        </button>
+                    <div>
+                      <strong style={{ fontSize: '14px', color: '#fff' }}>{slot.horario}</strong> - <span style={{ fontSize: '13px', color: slot.type === 'Livre' ? '#666' : '#fff' }}>{slot.cliente}</span>
+                      {slot.type !== 'Livre' && (
+                        <div style={{ fontSize: '10px', color: '#aaa', marginTop: '2px' }}>
+                          Tipo: {slot.type} {slot.item?.telefone ? `| Whats: ${slot.item.telefone}` : ''}
+                        </div>
                       )}
-                      
-                      <button 
-                        onClick={() => cancelarAgendamento(item.id)}
-                        className="btn-remover-item"
-                        style={{ flex: 1, padding: '8px', fontSize: '12px' }}
-                      >
-                        Cancelar ❌
-                      </button>
+                    </div>
+
+                    <div>
+                      {slot.type === 'Site' && slot.status !== 'concluido' && (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button onClick={() => concluirAtendimento(slot.item)} style={{ backgroundColor: '#2ed573', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>Concluir 💵</button>
+                          <button onClick={() => cancelarAgendamento(slot.item.id)} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px' }}>Desistiu ❌</button>
+                        </div>
+                      )}
+
+                      {slot.type === 'Fixo' && (
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button onClick={() => concluirAtendimento({ cliente: slot.cliente, valor: 40, horario: slot.horario })} style={{ backgroundColor: '#2ed573', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>Concluir 💵</button>
+                          <button onClick={() => liberarHorarioFixo(slot.item)} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px' }}>Desistiu ❌</button>
+                        </div>
+                      )}
+
+                      {slot.status === 'concluido' && (
+                        <span style={{ fontSize: '10px', color: '#2ed573', fontWeight: 'bold' }}>✓ Concluído</span>
+                      )}
                     </div>
                   </div>
                 ))}
-
-                {agendamentosBarbeiro.length === 0 && (
-                  <p style={{ marginTop: '20px', color: '#888' }}>Nenhum agendamento ativo pelo site para este barbeiro! 🙌</p>
-                )}
               </div>
 
               <button className="btn-voltar" style={{ marginTop: '20px' }} onClick={() => { setAutenticado(false); setPasso(1); }}>Sair do Painel 🚪</button>
@@ -884,4 +796,4 @@ function App() {
   )
 }
 
-export default App
+export default AppS
