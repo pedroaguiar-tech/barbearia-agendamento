@@ -21,9 +21,11 @@ function App() {
 
   // ☁️ BANCO DE DADOS EM TEMPO REAL NA NUVEM (FIREBASE)
   const [listaAgendamentos, setListaAgendamentos] = useState([])
+  const [listaFixosNuvem, setListaFixosNuvem] = useState([])
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'agendamentos'), (snapshot) => {
+    // Escuta Agendamentos
+    const unsubscribeAgendamentos = onSnapshot(collection(db, 'agendamentos'), (snapshot) => {
       const dadosNuvem = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -31,7 +33,19 @@ function App() {
       setListaAgendamentos(dadosNuvem)
     })
 
-    return () => unsubscribe()
+    // Escuta Clientes Fixos Cadastrados no Banco
+    const unsubscribeFixos = onSnapshot(collection(db, 'clientes_fixos'), (snapshot) => {
+      const fixos = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      setListaFixosNuvem(fixos)
+    })
+
+    return () => {
+      unsubscribeAgendamentos()
+      unsubscribeFixos()
+    }
   }, [])
 
   // 🔒 ESTADOS DO PAINEL PRIVADO DO BARBEIRO
@@ -39,6 +53,11 @@ function App() {
   const [autenticado, setAutenticado] = useState(false)
   const [barbeiroPainel, setBarbeiroPainel] = useState('Brendon')
   const [dataFiltroPainel, setDataFiltroPainel] = useState(new Date().toISOString().split('T')[0])
+
+  // Form para Adicionar Fixo
+  const [novoFixoDia, setNovoFixoDia] = useState(2) // Terça padrão
+  const [novoFixoHorario, setNovoFixoHorario] = useState('09:00')
+  const [novoFixoNome, setNovoFixoNome] = useState('')
 
   const SENHA_BARBEIRO = 'castrobarber'
 
@@ -77,23 +96,6 @@ function App() {
     { src: '/barba-corte.jpeg', legenda: 'Barba de Respeito 🧔' },
     { src: '/taper-fade-com-risco.jpeg', legenda: 'Risco de Cria 🎨' },
     { src: '/infantil.jpeg', legenda: 'Estilo Infantil 🚀' }, 
-  ]
-
-  // 🔒 CLIENTES FIXOS DO BRENDON
-  const clientesFixosBrendon = [
-    { diaSemana: 3, horario: '13:00', cliente: 'João Paulo (Fixo)' },
-    { diaSemana: 3, horario: '18:00', cliente: 'Jhow (Fixo)' },
-    { diaSemana: 3, horario: '19:00', cliente: 'Celso (Fixo)' },
-    { diaSemana: 4, horario: '13:00', cliente: 'Fabricio (Fixo)' },
-    { diaSemana: 5, horario: '09:00', cliente: 'Diego (Fixo)' },
-    { diaSemana: 5, horario: '10:00', cliente: 'Alemão (Fixo)' },
-    { diaSemana: 5, horario: '13:00', cliente: 'Roger (Fixo)' },
-    { diaSemana: 5, horario: '17:00', cliente: 'Raul (Fixo)' },
-    { diaSemana: 5, horario: '18:00', cliente: 'Pedrão (Fixo)' },
-    { diaSemana: 5, horario: '19:00', cliente: 'Wendel (Fixo)' },
-    { diaSemana: 5, horario: '20:00', cliente: 'Juninho (Fixo)' },
-    { diaSemana: 6, horario: '11:00', cliente: 'Davi Primo (Fixo)' },
-    { diaSemana: 6, horario: '18:00', cliente: 'Paulo (Fixo)' },
   ]
 
   function ehDiaPromocional(dataStr) {
@@ -135,8 +137,8 @@ function App() {
       return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']
     }
 
-    if (diaSemana === 0) return [] // Domingo (Folga do Brendon)
-    if (diaSemana === 1) return [] // Segunda-feira (Folga do Brendon)
+    if (diaSemana === 0) return [] // Domingo
+    if (diaSemana === 1) return [] // Segunda-feira
     if (diaSemana === 2) return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
     if (diaSemana === 3) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
     if (diaSemana === 4) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
@@ -218,7 +220,7 @@ function App() {
           await addDoc(collection(db, 'agendamentos'), {
             cliente: item.cliente,
             telefone: 'Cliente Fixo',
-            barbeiro: 'Brendon',
+            barbeiro: barbeiroPainel,
             data: dataFiltroPainel,
             horario: item.horario || 'Fixo',
             servicos: 'Atendimento Fixo',
@@ -252,7 +254,7 @@ function App() {
         await addDoc(collection(db, 'agendamentos'), {
           cliente: `${fixoObj.cliente} (CANCELADO)`,
           telefone: 'Fixo Liberado',
-          barbeiro: 'Brendon',
+          barbeiro: barbeiroPainel,
           data: dataFiltroPainel,
           horario: fixoObj.horario,
           servicos: 'Fixo Cancelado',
@@ -262,6 +264,41 @@ function App() {
         })
       } catch (error) {
         console.error("Erro ao liberar horário fixo:", error)
+      }
+    }
+  }
+
+  // ➕ ADICIONAR NOVO CLIENTE FIXO NO FIREBASE
+  async function adicionarNovoFixo(e) {
+    e.preventDefault()
+    if (!novoFixoNome.trim()) {
+      alert('Digite o nome do cliente fixo.')
+      return
+    }
+
+    try {
+      await addDoc(collection(db, 'clientes_fixos'), {
+        barbeiro: barbeiroPainel,
+        diaSemana: Number(novoFixoDia),
+        horario: novoFixoHorario,
+        cliente: `${novoFixoNome.trim()} (Fixo)`,
+        criadoEm: Date.now()
+      })
+      setNovoFixoNome('')
+      alert('Cliente fixo adicionado com sucesso!')
+    } catch (error) {
+      console.error("Erro ao adicionar cliente fixo:", error)
+    }
+  }
+
+  // 🗑️ REMOVER CLIENTE FIXO DEFINITIVAMENTE DO FIREBASE
+  async function deletarFixoDefinitivo(idFixo) {
+    const confirmar = window.confirm('Deseja remover este cliente fixo definitivamente da grade?')
+    if (confirmar) {
+      try {
+        await deleteDoc(doc(db, 'clientes_fixos', idFixo))
+      } catch (error) {
+        console.error("Erro ao deletar cliente fixo:", error)
       }
     }
   }
@@ -352,14 +389,19 @@ function App() {
       return { ocupado: true, motivo: registroNuvem.cliente }
     }
 
-    if (barbeiroSelecionado === 'Brendon' && dataSelecionada) {
+    if (dataSelecionada) {
       const [ano, mes, dia] = dataSelecionada.split('-').map(Number)
       const dataObj = new Date(ano, mes - 1, dia)
       const diaSemana = dataObj.getDay()
 
-      const fixo = clientesFixosBrendon.find(f => f.diaSemana === diaSemana && f.horario === horario)
-      if (fixo) {
-        return { ocupado: true, motivo: fixo.cliente }
+      const fixoNuvem = listaFixosNuvem.find(f => 
+        f.barbeiro === barbeiroSelecionado && 
+        f.diaSemana === diaSemana && 
+        f.horario === horario
+      )
+
+      if (fixoNuvem) {
+        return { ocupado: true, motivo: fixoNuvem.cliente }
       }
     }
 
@@ -377,7 +419,7 @@ function App() {
     }
   }
 
-  // 📊 CÁLCULOS DO DASHBOARD E DESEMPENHO DO PAINEL
+  // 📊 CÁLCULOS DO DASHBOARD DO PAINEL
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
   const dataHojeString = hoje.toISOString().split('T')[0]
@@ -397,7 +439,7 @@ function App() {
     })
     .reduce((total, item) => total + item.valor, 0)
 
-  // 🗓️ CONSTRUÇÃO DA LINHA DO TEMPO DIÁRIA PARA O PAINEL ORGANIZADO
+  // 🗓️ LINHA DO TEMPO DIÁRIA DINÂMICA
   function obterLinhaDoTempoDoDia() {
     if (!dataFiltroPainel) return []
     const [ano, mes, dia] = dataFiltroPainel.split('-').map(Number)
@@ -407,7 +449,6 @@ function App() {
     const todosHorariosDia = obterHorariosDisponiveis(barbeiroPainel, dataFiltroPainel)
     
     return todosHorariosDia.map(horario => {
-      // 1. Procura no Firebase
       const regNuvem = listaAgendamentos.find(item => 
         item.data === dataFiltroPainel && 
         item.barbeiro === barbeiroPainel && 
@@ -418,12 +459,14 @@ function App() {
         return { horario, cliente: regNuvem.cliente, tipo: 'Site', status: regNuvem.status, item: regNuvem }
       }
 
-      // 2. Procura nos Fixos do Brendon
-      if (barbeiroPainel === 'Brendon') {
-        const fixo = clientesFixosBrendon.find(f => f.diaSemana === diaSemana && f.horario === horario)
-        if (fixo && (!regNuvem || regNuvem.status !== 'fixo_cancelado')) {
-          return { horario, cliente: fixo.cliente, tipo: 'Fixo', status: 'fixo', item: fixo }
-        }
+      const fixoNuvem = listaFixosNuvem.find(f => 
+        f.barbeiro === barbeiroPainel && 
+        f.diaSemana === diaSemana && 
+        f.horario === horario
+      )
+
+      if (fixoNuvem && (!regNuvem || regNuvem.status !== 'fixo_cancelado')) {
+        return { horario, cliente: fixoNuvem.cliente, tipo: 'Fixo', status: 'fixo', item: fixoNuvem }
       }
 
       return { horario, cliente: 'Livre / Disponível', tipo: 'Livre', status: 'livre', item: null }
@@ -431,6 +474,7 @@ function App() {
   }
 
   const linhaDoTempoHoje = obterLinhaDoTempoDoDia()
+  const diasNomesMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
   return (
     <div className="container" style={{ paddingBottom: passo === 1 && carrinho.length > 0 ? '100px' : '20px' }}>
@@ -677,7 +721,7 @@ function App() {
         </div>
       )}
 
-      {/* 🔒 PASSO 6: PAINEL ORGANIZADO DO BARBEIRO */}
+      {/* 🔒 PASSO 6: PAINEL DO BARBEIRO */}
       {passo === 6 && (
         <div className="card-secao conteudo-passo">
           {!autenticado ? (
@@ -723,6 +767,63 @@ function App() {
                 <div style={{ backgroundColor: '#1e1e1e', padding: '10px', borderRadius: '8px', border: '1px solid #333' }}>
                   <span style={{ fontSize: '11px', color: '#aaa' }}>Mês Atual 🗓️</span>
                   <h3 style={{ margin: '3px 0 0 0', fontSize: '15px', color: '#1e90ff' }}>R$ {faturamentoMes},00</h3>
+                </div>
+              </div>
+
+              {/* 🛠️ GERENCIADOR DE CLIENTES FIXOS */}
+              <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '25px', border: '1px solid #ffa502', textAlign: 'left' }}>
+                <h3 style={{ fontSize: '14px', color: '#ffa502', margin: '0 0 8px 0' }}>📌 Gerenciar Clientes Fixos ({barbeiroPainel})</h3>
+                <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 10px 0' }}>Cadastre os horários fixos para bloqueá-los automaticamente no site:</p>
+
+                <form onSubmit={adicionarNovoFixo} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <select 
+                      value={novoFixoDia} 
+                      onChange={(e) => setNovoFixoDia(e.target.value)} 
+                      style={{ flex: 1, padding: '8px', borderRadius: '6px', backgroundColor: '#222', color: '#fff', border: '1px solid #444', fontSize: '12px' }}
+                    >
+                      <option value={2}>Terça-feira</option>
+                      <option value={3}>Quarta-feira</option>
+                      <option value={4}>Quinta-feira</option>
+                      <option value={5}>Sexta-feira</option>
+                      <option value={6}>Sábado</option>
+                    </select>
+
+                    <select 
+                      value={novoFixoHorario} 
+                      onChange={(e) => setNovoFixoHorario(e.target.value)} 
+                      style={{ flex: 1, padding: '8px', borderRadius: '6px', backgroundColor: '#222', color: '#fff', border: '1px solid #444', fontSize: '12px' }}
+                    >
+                      {['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'].map(h => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <input 
+                    type="text" 
+                    placeholder="Nome do Cliente Fixo" 
+                    value={novoFixoNome} 
+                    onChange={(e) => setNovoFixoNome(e.target.value)} 
+                    style={{ padding: '8px', borderRadius: '6px', backgroundColor: '#222', color: '#fff', border: '1px solid #444', fontSize: '12px' }}
+                  />
+
+                  <button type="submit" style={{ backgroundColor: '#ffa502', color: '#000', border: 'none', padding: '8px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' }}>
+                    Adicionar Fixo ➕
+                  </button>
+                </form>
+
+                {/* Lista de Fixos Atuais Cadastrados */}
+                <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                  {listaFixosNuvem.filter(f => f.barbeiro === barbeiroPainel).map(fixo => (
+                    <div key={fixo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#222', padding: '6px 10px', borderRadius: '4px', marginBottom: '4px', fontSize: '11px' }}>
+                      <span><strong>{diasNomesMap[fixo.diaSemana]} {fixo.horario}:</strong> {fixo.cliente}</span>
+                      <button onClick={() => deletarFixoDefinitivo(fixo.id)} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '2px 6px', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}>Remover 🗑️</button>
+                    </div>
+                  ))}
+                  {listaFixosNuvem.filter(f => f.barbeiro === barbeiroPainel).length === 0 && (
+                    <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>Nenhum cliente fixo cadastrado ainda.</p>
+                  )}
                 </div>
               </div>
 
