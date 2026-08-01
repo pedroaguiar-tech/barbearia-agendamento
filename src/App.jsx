@@ -268,11 +268,22 @@ function App() {
     }
   }
 
-  // ➕ ADICIONAR NOVO CLIENTE FIXO NO FIREBASE
+  // ➕ ADICIONAR NOVO CLIENTE FIXO COM VERIFICAÇÃO DE HORÁRIO
   async function adicionarNovoFixo(e) {
     e.preventDefault()
     if (!novoFixoNome.trim()) {
       alert('Digite o nome do cliente fixo.')
+      return
+    }
+
+    const conflito = listaFixosNuvem.find(f => 
+      f.barbeiro === barbeiroPainel && 
+      f.diaSemana === Number(novoFixoDia) && 
+      f.horario === novoFixoHorario
+    )
+
+    if (conflito) {
+      alert(`O horário ${novoFixoHorario} já está reservado para ${conflito.cliente}! Escolha outro horário.`)
       return
     }
 
@@ -291,7 +302,7 @@ function App() {
     }
   }
 
-  // 🗑️ REMOVER CLIENTE FIXO DEFINITIVAMENTE DO FIREBASE
+  // 🗑️ REMOVER CLIENTE FIXO DEFINITIVAMENTE
   async function deletarFixoDefinitivo(idFixo) {
     const confirmar = window.confirm('Deseja remover este cliente fixo definitivamente da grade?')
     if (confirmar) {
@@ -419,7 +430,7 @@ function App() {
     }
   }
 
-  // 📊 CÁLCULOS DO DASHBOARD DO PAINEL
+  // 📊 CÁLCULOS DO DASHBOARD
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
   const dataHojeString = hoje.toISOString().split('T')[0]
@@ -474,7 +485,16 @@ function App() {
   }
 
   const linhaDoTempoHoje = obterLinhaDoTempoDoDia()
-  const diasNomesMap = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+  const diasNomesMap = ['Domingo', 'Segunda', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
+
+  // Fixos filtrados apenas para o dia selecionado no formulário
+  const fixosDoDiaSelecionado = listaFixosNuvem.filter(f => 
+    f.barbeiro === barbeiroPainel && 
+    f.diaSemana === Number(novoFixoDia)
+  ).sort((a, b) => a.horario.localeCompare(b.horario))
+
+  // Lista de horários base para o formulário
+  const horariosBaseForm = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
 
   return (
     <div className="container" style={{ paddingBottom: passo === 1 && carrinho.length > 0 ? '100px' : '20px' }}>
@@ -758,7 +778,7 @@ function App() {
                 </button>
               </div>
 
-              {/* 💵 DASHBOARD RAPIDO */}
+              {/* 💵 DASHBOARD */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '20px' }}>
                 <div style={{ backgroundColor: '#1e1e1e', padding: '10px', borderRadius: '8px', border: '1px solid #333' }}>
                   <span style={{ fontSize: '11px', color: '#aaa' }}>Hoje 💵</span>
@@ -770,16 +790,16 @@ function App() {
                 </div>
               </div>
 
-              {/* 🛠️ GERENCIADOR DE CLIENTES FIXOS */}
+              {/* 🛠️ GERENCIADOR INTELIGENTE DE CLIENTES FIXOS */}
               <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '25px', border: '1px solid #ffa502', textAlign: 'left' }}>
                 <h3 style={{ fontSize: '14px', color: '#ffa502', margin: '0 0 8px 0' }}>📌 Gerenciar Clientes Fixos ({barbeiroPainel})</h3>
-                <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 10px 0' }}>Cadastre os horários fixos para bloqueá-los automaticamente no site:</p>
+                <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 10px 0' }}>Escolha o dia para ver os fixos já cadastrados e adicionar novos:</p>
 
                 <form onSubmit={adicionarNovoFixo} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <select 
                       value={novoFixoDia} 
-                      onChange={(e) => setNovoFixoDia(e.target.value)} 
+                      onChange={(e) => setNovoFixoDia(Number(e.target.value))} 
                       style={{ flex: 1, padding: '8px', borderRadius: '6px', backgroundColor: '#222', color: '#fff', border: '1px solid #444', fontSize: '12px' }}
                     >
                       <option value={2}>Terça-feira</option>
@@ -794,9 +814,14 @@ function App() {
                       onChange={(e) => setNovoFixoHorario(e.target.value)} 
                       style={{ flex: 1, padding: '8px', borderRadius: '6px', backgroundColor: '#222', color: '#fff', border: '1px solid #444', fontSize: '12px' }}
                     >
-                      {['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'].map(h => (
-                        <option key={h} value={h}>{h}</option>
-                      ))}
+                      {horariosBaseForm.map(h => {
+                        const jaOcupado = fixosDoDiaSelecionado.some(f => f.horario === h)
+                        return (
+                          <option key={h} value={h} disabled={jaOcupado}>
+                            {h} {jaOcupado ? '(Ocupado)' : ''}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
 
@@ -813,17 +838,23 @@ function App() {
                   </button>
                 </form>
 
-                {/* Lista de Fixos Atuais Cadastrados */}
-                <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
-                  {listaFixosNuvem.filter(f => f.barbeiro === barbeiroPainel).map(fixo => (
-                    <div key={fixo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#222', padding: '6px 10px', borderRadius: '4px', marginBottom: '4px', fontSize: '11px' }}>
-                      <span><strong>{diasNomesMap[fixo.diaSemana]} {fixo.horario}:</strong> {fixo.cliente}</span>
-                      <button onClick={() => deletarFixoDefinitivo(fixo.id)} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '2px 6px', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}>Remover 🗑️</button>
-                    </div>
-                  ))}
-                  {listaFixosNuvem.filter(f => f.barbeiro === barbeiroPainel).length === 0 && (
-                    <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>Nenhum cliente fixo cadastrado ainda.</p>
-                  )}
+                {/* VISUALIZAÇÃO DOS FIXOS DO DIA SELECIONADO */}
+                <div style={{ borderTop: '1px solid #333', paddingTop: '10px', marginTop: '5px' }}>
+                  <p style={{ fontSize: '11px', color: '#eccc68', fontWeight: 'bold', margin: '0 0 6px 0' }}>
+                    📋 Fixos Cadastrados na {diasNomesMap[novoFixoDia]}:
+                  </p>
+
+                  <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                    {fixosDoDiaSelecionado.map(fixo => (
+                      <div key={fixo.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#222', padding: '6px 10px', borderRadius: '4px', marginBottom: '4px', fontSize: '11px' }}>
+                        <span><strong style={{ color: '#ffa502' }}>{fixo.horario}</strong> - {fixo.cliente}</span>
+                        <button onClick={() => deletarFixoDefinitivo(fixo.id)} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '2px 6px', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}>Remover 🗑️</button>
+                      </div>
+                    ))}
+                    {fixosDoDiaSelecionado.length === 0 && (
+                      <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>Nenhum cliente fixo para {diasNomesMap[novoFixoDia]}.</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -839,7 +870,7 @@ function App() {
                 />
               </div>
 
-              {/* 🕒 LINHA DO TEMPO DIÁRIA LIMPA E ORGANIZADA */}
+              {/* 🕒 LINHA DO TEMPO DIÁRIA */}
               <div className="lista-agenda-dia" style={{ textAlign: 'left' }}>
                 <h3 style={{ fontSize: '15px', marginBottom: '12px' }}>
                   Horários do dia ({formatarData(dataFiltroPainel)}):
@@ -848,7 +879,7 @@ function App() {
                 {linhaDoTempoHoje.map((slot, idx) => (
                   <div key={idx} style={{ 
                     display: 'flex', 
-                    justifyContent: 'space-between', 
+                    justify: 'space-between', 
                     alignItems: 'center', 
                     backgroundColor: slot.status === 'concluido' ? '#1b3b22' : slot.tipo === 'Livre' ? '#1a1a1a' : '#222', 
                     padding: '10px 14px', 
