@@ -7,7 +7,8 @@ import {
   onSnapshot, 
   doc, 
   updateDoc, 
-  deleteDoc 
+  deleteDoc,
+  setDoc
 } from 'firebase/firestore'
 
 function App() {
@@ -22,6 +23,31 @@ function App() {
   // ☁️ BANCO DE DADOS EM TEMPO REAL NA NUVEM (FIREBASE)
   const [listaAgendamentos, setListaAgendamentos] = useState([])
   const [listaFixosNuvem, setListaFixosNuvem] = useState([])
+  const [configBarbeiros, setConfigBarbeiros] = useState({
+    Brendon: {
+      folgas: [0, 1], // 0: Dom, 1: Seg por padrão
+      servicos: [
+        { id: 1, nome: 'Corte', preco: 40, duracao: '1h', imagem: '/corte.jpeg', promo: true },
+        { id: 2, nome: 'Luzes', preco: 60, duracao: '1h', imagem: '/luzes.jpeg' },
+        { id: 3, nome: 'Botox', preco: 70, duracao: '1h', imagem: '' },
+        { id: 4, nome: 'Nevou', preco: 70, duracao: '1h', imagem: '' }, 
+        { id: 5, nome: 'Pezinho', preco: 15, duracao: '1h', imagem: '' },
+        { id: 6, nome: 'Hidratação', preco: 15, duracao: '1h', imagem: '' },
+        { id: 7, nome: 'Sobrancelha', preco: 15, duracao: '1h', imagem: '' },
+        { id: 8, nome: 'Progressiva', preco: 80, duracao: '1h', imagem: '' },
+        { id: 9, nome: 'Relaxamento', preco: 35, duracao: '1h', imagem: '' },
+        { id: 10, nome: 'Barba Lisa', preco: 20, duracao: '1h', imagem: '' },
+        { id: 11, nome: 'Barba Desenhada', preco: 25, duracao: '1h', imagem: '/barba-corte.jpeg' },
+      ],
+      galeria: [
+        { src: '/corte.jpeg', legenda: 'Degradê Fino ✂️' },
+        { src: '/luzes.jpeg', legenda: 'Reflexo Alinhado ⚡' },
+        { src: '/barba-corte.jpeg', legenda: 'Barba de Respeito 🧔' },
+        { src: '/taper-fade-com-risco.jpeg', legenda: 'Risco de Cria 🎨' },
+        { src: '/infantil.jpeg', legenda: 'Estilo Infantil 🚀' },
+      ]
+    }
+  })
 
   useEffect(() => {
     // Escuta Agendamentos
@@ -33,7 +59,7 @@ function App() {
       setListaAgendamentos(dadosNuvem)
     })
 
-    // Escuta Clientes Fixos Cadastrados no Banco
+    // Escuta Clientes Fixos
     const unsubscribeFixos = onSnapshot(collection(db, 'clientes_fixos'), (snapshot) => {
       const fixos = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -42,9 +68,21 @@ function App() {
       setListaFixosNuvem(fixos)
     })
 
+    // Escuta Configurações Personalizadas dos Barbeiros (Folgas, Preços, Fotos)
+    const unsubscribeConfig = onSnapshot(collection(db, 'config_barbeiros'), (snapshot) => {
+      const configs = {}
+      snapshot.docs.forEach(doc => {
+        configs[doc.id] = doc.data()
+      })
+      if (Object.keys(configs).length > 0) {
+        setConfigBarbeiros(prev => ({ ...prev, ...configs }))
+      }
+    })
+
     return () => {
       unsubscribeAgendamentos()
       unsubscribeFixos()
+      unsubscribeConfig()
     }
   }, [])
 
@@ -54,14 +92,22 @@ function App() {
   const [barbeiroPainel, setBarbeiroPainel] = useState('Brendon')
   const [dataFiltroPainel, setDataFiltroPainel] = useState(new Date().toISOString().split('T')[0])
 
-  // Form para Adicionar Fixo
-  const [novoFixoDia, setNovoFixoDia] = useState(5) // Sexta-feira padrão
+  // Form de Adicionar Fixo
+  const [novoFixoDia, setNovoFixoDia] = useState(5)
   const [novoFixoHorario, setNovoFixoHorario] = useState('09:00')
   const [novoFixoNome, setNovoFixoNome] = useState('')
 
+  // Form de Novo Serviço
+  const [novoServicoNome, setNovoServicoNome] = useState('')
+  const [novoServicoPreco, setNovoServicoPreco] = useState('')
+
+  // Form de Nova Foto da Galeria
+  const [novaFotoUrl, setNovaFotoUrl] = useState('')
+  const [novaFotoLegenda, setNovaFotoLegenda] = useState('')
+
   const SENHA_BARBEIRO = 'castrobarber'
 
-  // 📱 CONFIGURAÇÃO DOS WHATSAPPS E CHAVES PIX DOS BARBEIROS
+  // 📱 CONFIGURAÇÕES FIXAS DOS WHATSAPPS
   const dadosBarbeiros = {
     Brendon: {
       whats: '5511948260279',
@@ -75,8 +121,8 @@ function App() {
     }
   }
 
-  // 📋 TABELA DE SERVIÇOS
-  const tabelaServicos = [
+  // 📋 DADOS DINÂMICOS
+  const tabelaServicos = configBarbeiros[barbeiroSelecionado || 'Brendon']?.servicos || [
     { id: 1, nome: 'Corte', preco: 40, duracao: '1h', imagem: '/corte.jpeg', promo: true },
     { id: 2, nome: 'Luzes', preco: 60, duracao: '1h', imagem: '/luzes.jpeg' },
     { id: 3, nome: 'Botox', preco: 70, duracao: '1h', imagem: '' },
@@ -90,15 +136,15 @@ function App() {
     { id: 11, nome: 'Barba Desenhada', preco: 25, duracao: '1h', imagem: '/barba-corte.jpeg' },
   ]
 
-  const fotosCarrossel = [
+  const fotosCarrossel = configBarbeiros[barbeiroSelecionado || 'Brendon']?.galeria || [
     { src: '/corte.jpeg', legenda: 'Degradê Fino ✂️' },
     { src: '/luzes.jpeg', legenda: 'Reflexo Alinhado ⚡' },
     { src: '/barba-corte.jpeg', legenda: 'Barba de Respeito 🧔' },
     { src: '/taper-fade-com-risco.jpeg', legenda: 'Risco de Cria 🎨' },
-    { src: '/infantil.jpeg', legenda: 'Estilo Infantil 🚀' }, 
+    { src: '/infantil.jpeg', legenda: 'Estilo Infantil 🚀' },
   ]
 
-  // 🔒 CLIENTES FIXOS PADRÃO DO BRENDON (LISTA BASE DO CÓDIGO)
+  // Fixos Padrão do Código (Fallback)
   const clientesFixosPadraoBrendon = [
     { diaSemana: 3, horario: '13:00', cliente: 'João Paulo (Fixo)' },
     { diaSemana: 3, horario: '18:00', cliente: 'Jhow (Fixo)' },
@@ -150,12 +196,16 @@ function App() {
     const dataObj = new Date(ano, mes - 1, dia)
     const diaSemana = dataObj.getDay()
 
+    // Checa se o dia é folga configurada no banco
+    const folgasBarbeiro = configBarbeiros[barbeiro]?.folgas || (barbeiro === 'Brendon' ? [0, 1] : [])
+    if (folgasBarbeiro.includes(diaSemana)) {
+      return [] // Retorna vazio indicando folga
+    }
+
     if (barbeiro === 'Lucas') {
       return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']
     }
 
-    if (diaSemana === 0) return [] // Domingo
-    if (diaSemana === 1) return [] // Segunda-feira
     if (diaSemana === 2) return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
     if (diaSemana === 3) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
     if (diaSemana === 4) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
@@ -293,14 +343,12 @@ function App() {
       return
     }
 
-    // Checa conflito na nuvem
     const conflitoNuvem = listaFixosNuvem.find(f => 
       f.barbeiro === barbeiroPainel && 
       f.diaSemana === Number(novoFixoDia) && 
       f.horario === novoFixoHorario
     )
 
-    // Checa conflito nos fixos padrão do código
     const conflitoPadrao = barbeiroPainel === 'Brendon' && clientesFixosPadraoBrendon.find(f => 
       f.diaSemana === Number(novoFixoDia) && 
       f.horario === novoFixoHorario
@@ -327,7 +375,6 @@ function App() {
     }
   }
 
-  // 🗑️ REMOVER CLIENTE FIXO DEFINITIVAMENTE DO FIREBASE
   async function deletarFixoDefinitivo(idFixo) {
     const confirmar = window.confirm('Deseja remover este cliente fixo definitivamente da grade?')
     if (confirmar) {
@@ -336,6 +383,103 @@ function App() {
       } catch (error) {
         console.error("Erro ao deletar cliente fixo:", error)
       }
+    }
+  }
+
+  // 🏖️ GERENCIADOR DE DIAS DE FOLGA NO PAINEL
+  async function toggleDiaFolga(diaIndex) {
+    const folgasAtuais = configBarbeiros[barbeiroPainel]?.folgas || [0, 1]
+    let novasFolgas = []
+
+    if (folgasAtuais.includes(diaIndex)) {
+      novasFolgas = folgasAtuais.filter(d => d !== diaIndex)
+    } else {
+      novasFolgas = [...folgasAtuais, diaIndex]
+    }
+
+    try {
+      const docRef = doc(db, 'config_barbeiros', barbeiroPainel)
+      await setDoc(docRef, { ...configBarbeiros[barbeiroPainel], folgas: novasFolgas }, { merge: true })
+    } catch (error) {
+      console.error("Erro ao atualizar folgas:", error)
+    }
+  }
+
+  // 💰 GERENCIADOR DE SERVIÇOS E PREÇOS NO PAINEL
+  async function atualizarPrecoServico(idServico, novoPreco) {
+    const servicosAtuais = configBarbeiros[barbeiroPainel]?.servicos || tabelaServicos
+    const servicosAtualizados = servicosAtuais.map(s => s.id === idServico ? { ...s, preco: Number(novoPreco) } : s)
+
+    try {
+      const docRef = doc(db, 'config_barbeiros', barbeiroPainel)
+      await setDoc(docRef, { ...configBarbeiros[barbeiroPainel], servicos: servicosAtualizados }, { merge: true })
+    } catch (error) {
+      console.error("Erro ao atualizar preço:", error)
+    }
+  }
+
+  async function adicionarNovoServico(e) {
+    e.preventDefault()
+    if (!novoServicoNome.trim() || !novoServicoPreco) return
+
+    const servicosAtuais = configBarbeiros[barbeiroPainel]?.servicos || tabelaServicos
+    const novoServ = {
+      id: Date.now(),
+      nome: novoServicoNome.trim(),
+      preco: Number(novoServicoPreco),
+      duracao: '1h',
+      imagem: ''
+    }
+
+    try {
+      const docRef = doc(db, 'config_barbeiros', barbeiroPainel)
+      await setDoc(docRef, { ...configBarbeiros[barbeiroPainel], servicos: [...servicosAtuais, novoServ] }, { merge: true })
+      setNovoServicoNome('')
+      setNovoServicoPreco('')
+    } catch (error) {
+      console.error("Erro ao adicionar serviço:", error)
+    }
+  }
+
+  async function removerServico(idServico) {
+    const servicosAtuais = configBarbeiros[barbeiroPainel]?.servicos || tabelaServicos
+    const servicosFiltrados = servicosAtuais.filter(s => s.id !== idServico)
+
+    try {
+      const docRef = doc(db, 'config_barbeiros', barbeiroPainel)
+      await setDoc(docRef, { ...configBarbeiros[barbeiroPainel], servicos: servicosFiltrados }, { merge: true })
+    } catch (error) {
+      console.error("Erro ao remover serviço:", error)
+    }
+  }
+
+  // 📸 GERENCIADOR DE FOTOS NO PAINEL
+  async function adicionarNovaFotoGaleria(e) {
+    e.preventDefault()
+    if (!novaFotoUrl.trim()) return
+
+    const galeriaAtual = configBarbeiros[barbeiroPainel]?.galeria || fotosCarrossel
+    const novaFoto = { src: novaFotoUrl.trim(), legenda: novaFotoLegenda.trim() || 'Corte no Estilo ✂️' }
+
+    try {
+      const docRef = doc(db, 'config_barbeiros', barbeiroPainel)
+      await setDoc(docRef, { ...configBarbeiros[barbeiroPainel], galeria: [...galeriaAtual, novaFoto] }, { merge: true })
+      setNovaFotoUrl('')
+      setNovaFotoLegenda('')
+    } catch (error) {
+      console.error("Erro ao adicionar foto:", error)
+    }
+  }
+
+  async function removerFotoGaleria(indexFoto) {
+    const galeriaAtual = configBarbeiros[barbeiroPainel]?.galeria || fotosCarrossel
+    const galeriaFiltrada = galeriaAtual.filter((_, idx) => idx !== indexFoto)
+
+    try {
+      const docRef = doc(db, 'config_barbeiros', barbeiroPainel)
+      await setDoc(docRef, { ...configBarbeiros[barbeiroPainel], galeria: galeriaFiltrada }, { merge: true })
+    } catch (error) {
+      console.error("Erro ao remover foto:", error)
     }
   }
 
@@ -430,7 +574,6 @@ function App() {
       const dataObj = new Date(ano, mes - 1, dia)
       const diaSemana = dataObj.getDay()
 
-      // 1. Procura nos fixos dinâmicos do Firebase
       const fixoNuvem = listaFixosNuvem.find(f => 
         f.barbeiro === barbeiroSelecionado && 
         f.diaSemana === diaSemana && 
@@ -441,7 +584,6 @@ function App() {
         return { ocupado: true, motivo: fixoNuvem.cliente }
       }
 
-      // 2. Se não achou na nuvem, procura nos fixos padrão do código
       if (barbeiroSelecionado === 'Brendon') {
         const fixoPadrao = clientesFixosPadraoBrendon.find(f => 
           f.diaSemana === diaSemana && 
@@ -508,7 +650,6 @@ function App() {
         return { horario, cliente: regNuvem.cliente, tipo: 'Site', status: regNuvem.status, item: regNuvem }
       }
 
-      // Procura nos fixos do Firebase
       const fixoNuvem = listaFixosNuvem.find(f => 
         f.barbeiro === barbeiroPainel && 
         f.diaSemana === diaSemana && 
@@ -519,7 +660,6 @@ function App() {
         return { horario, cliente: fixoNuvem.cliente, tipo: 'Fixo', status: 'fixo', item: fixoNuvem }
       }
 
-      // Procura nos fixos padrão do código
       if (barbeiroPainel === 'Brendon') {
         const fixoPadrao = clientesFixosPadraoBrendon.find(f => 
           f.diaSemana === diaSemana && 
@@ -538,7 +678,6 @@ function App() {
   const linhaDoTempoHoje = obterLinhaDoTempoDoDia()
   const diasNomesMap = ['Domingo', 'Segunda', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
 
-  // Horários completos para cada dia da semana para o formulário
   function obterHorariosDoDiaSemana(diaSemana) {
     if (diaSemana === 2) return ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
     if (diaSemana === 3) return ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
@@ -550,7 +689,6 @@ function App() {
 
   const todosHorariosFormDia = obterHorariosDoDiaSemana(Number(novoFixoDia))
 
-  // Mapeia TODOS os horários do dia selecionado no formulário com seu respectivo ocupante (Nuvem ou Padrão)
   const quadroGeralFormDia = todosHorariosFormDia.map(h => {
     const fixoNuvem = listaFixosNuvem.find(f => f.barbeiro === barbeiroPainel && f.diaSemana === Number(novoFixoDia) && f.horario === h)
     if (fixoNuvem) {
@@ -566,6 +704,10 @@ function App() {
 
     return { horario: h, cliente: 'Livre / Disponível', ocupado: false, idNuvem: null }
   })
+
+  const folgasBarbeiroPainel = configBarbeiros[barbeiroPainel]?.folgas || (barbeiroPainel === 'Brendon' ? [0, 1] : [])
+  const servicosBarbeiroPainel = configBarbeiros[barbeiroPainel]?.servicos || tabelaServicos
+  const galeriaBarbeiroPainel = configBarbeiros[barbeiroPainel]?.galeria || fotosCarrossel
 
   return (
     <div className="container" style={{ paddingBottom: passo === 1 && carrinho.length > 0 ? '100px' : '20px' }}>
@@ -861,7 +1003,90 @@ function App() {
                 </div>
               </div>
 
-              {/* 🛠️ GERENCIADOR DE CLIENTES FIXOS COM VISÃO COMPLETA DO DIA */}
+              {/* 🏖️ NOVO: GERENCIADOR DE DIAS DE FOLGA */}
+              <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #1e90ff', textAlign: 'left' }}>
+                <h3 style={{ fontSize: '14px', color: '#1e90ff', margin: '0 0 8px 0' }}>🏖️ Dias de Folga da Semana ({barbeiroPainel})</h3>
+                <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 10px 0' }}>Clique nos dias para marcar como folga e fechar a agenda automaticamente:</p>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {diasNomesMap.map((diaNome, idx) => {
+                    const ehFolga = folgasBarbeiroPainel.includes(idx)
+                    return (
+                      <button 
+                        key={idx}
+                        onClick={() => toggleDiaFolga(idx)}
+                        style={{
+                          backgroundColor: ehFolga ? '#ff4757' : '#2ed573',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {diaNome} {ehFolga ? '😴 Folga' : '✂️ Trabalha'}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 💰 NOVO: GERENCIADOR DE SERVIÇOS E PREÇOS */}
+              <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #2ed573', textAlign: 'left' }}>
+                <h3 style={{ fontSize: '14px', color: '#2ed573', margin: '0 0 8px 0' }}>💰 Gerenciar Serviços e Preços</h3>
+                <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 10px 0' }}>Altere os valores cobrados ou crie novos serviços para o site:</p>
+
+                <div style={{ maxHeight: '180px', overflowY: 'auto', marginBottom: '10px' }}>
+                  {servicosBarbeiroPainel.map(serv => (
+                    <div key={serv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#222', padding: '6px 10px', borderRadius: '4px', marginBottom: '4px', fontSize: '11px' }}>
+                      <span><strong>{serv.nome}:</strong> R$ {serv.preco},00</span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button 
+                          onClick={() => {
+                            const p = prompt(`Novo preço para ${serv.nome}:`, serv.preco)
+                            if (p !== null) atualizarPrecoServico(serv.id, p)
+                          }}
+                          style={{ backgroundColor: '#eccc68', color: '#000', border: 'none', padding: '2px 6px', borderRadius: '3px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}
+                        >
+                          Mudar R$ ✏️
+                        </button>
+                        <button onClick={() => removerServico(serv.id)} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '2px 6px', borderRadius: '3px', cursor: 'pointer', fontSize: '10px' }}>🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <form onSubmit={adicionarNovoServico} style={{ display: 'flex', gap: '6px' }}>
+                  <input type="text" placeholder="Nome do Serviço" value={novoServicoNome} onChange={(e) => setNovoServicoNome(e.target.value)} style={{ flex: 2, padding: '6px', borderRadius: '4px', backgroundColor: '#222', color: '#fff', border: '1px solid #444', fontSize: '11px' }} />
+                  <input type="number" placeholder="Preço R$" value={novoServicoPreco} onChange={(e) => setNovoServicoPreco(e.target.value)} style={{ flex: 1, padding: '6px', borderRadius: '4px', backgroundColor: '#222', color: '#fff', border: '1px solid #444', fontSize: '11px' }} />
+                  <button type="submit" style={{ backgroundColor: '#2ed573', color: '#000', border: 'none', padding: '6px 10px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '11px' }}>+ Criar</button>
+                </form>
+              </div>
+
+              {/* 📸 NOVO: GERENCIADOR DE FOTOS DO CARROSSEL */}
+              <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #eccc68', textAlign: 'left' }}>
+                <h3 style={{ fontSize: '14px', color: '#eccc68', margin: '0 0 8px 0' }}>📸 Fotos do Carrossel (Galeria)</h3>
+                <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 10px 0' }}>Gerencie as fotos que aparecem na galeria do topo do site:</p>
+
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '10px' }}>
+                  {galeriaBarbeiroPainel.map((foto, idx) => (
+                    <div key={idx} style={{ position: 'relative', minWidth: '70px', textAlign: 'center' }}>
+                      <img src={foto.src} alt={foto.legenda} style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '6px' }} />
+                      <button onClick={() => removerFotoGaleria(idx)} style={{ position: 'absolute', top: '-5px', right: '-5px', backgroundColor: '#ff4757', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', cursor: 'pointer' }}>×</button>
+                    </div>
+                  ))}
+                </div>
+
+                <form onSubmit={adicionarNovaFotoGaleria} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <input type="text" placeholder="Link da Imagem (URL ou /nome-foto.jpeg)" value={novaFotoUrl} onChange={(e) => setNovaFotoUrl(e.target.value)} style={{ padding: '6px', borderRadius: '4px', backgroundColor: '#222', color: '#fff', border: '1px solid #444', fontSize: '11px' }} />
+                  <input type="text" placeholder="Legenda da Foto (ex: Degradê Top ⚡)" value={novaFotoLegenda} onChange={(e) => setNovaFotoLegenda(e.target.value)} style={{ padding: '6px', borderRadius: '4px', backgroundColor: '#222', color: '#fff', border: '1px solid #444', fontSize: '11px' }} />
+                  <button type="submit" style={{ backgroundColor: '#eccc68', color: '#000', border: 'none', padding: '6px 10px', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer', fontSize: '11px' }}>+ Adicionar Foto</button>
+                </form>
+              </div>
+
+              {/* 🛠️ GERENCIADOR DE CLIENTES FIXOS */}
               <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '25px', border: '1px solid #ffa502', textAlign: 'left' }}>
                 <h3 style={{ fontSize: '14px', color: '#ffa502', margin: '0 0 8px 0' }}>📌 Gerenciar Clientes Fixos ({barbeiroPainel})</h3>
                 <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 10px 0' }}>Selecione o dia para ver a grade de horários e adicionar novos fixos:</p>
@@ -909,7 +1134,7 @@ function App() {
                   </button>
                 </form>
 
-                {/* VISUALIZAÇÃO COMPLETA DE TODOS OS HORÁRIOS DA SEMANA PARA O DIA SELECIONADO */}
+                {/* GRADE COMPLETA DE FIXOS */}
                 <div style={{ borderTop: '1px solid #333', paddingTop: '10px', marginTop: '5px' }}>
                   <p style={{ fontSize: '11px', color: '#eccc68', fontWeight: 'bold', margin: '0 0 6px 0' }}>
                     📋 Grade de Fixos - {diasNomesMap[novoFixoDia]}:
