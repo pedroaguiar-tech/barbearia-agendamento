@@ -1,20 +1,46 @@
-/* Configuração global da página para fundo escuro */
-body {
-  background-color: #0f0f11;
-  margin: 0;
-  padding: 0;
+/* ==========================================================================
+   🔒 AJUSTES GLOBAIS DE CONTRAPARTIDA: ENCAIXE SEM ROLAGEM LATERAL E SEM ZOOM
+   ========================================================================== */
+*, *:before, *:after {
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
-.container {
-  max-width: 500px;
-  margin: 40px auto;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  text-align: center;
-  padding: 30px 20px;
-  background-color: #1a1a1e; /* Fundo grafite escuro combinando com o logo */
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  height: 100%;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: #0f0f11;
   color: #ffffff;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* CONTAINER PRINCIPAL RESPONSIVO */
+.container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 14px;
+  background-color: #1a1a1e;
+  min-height: 100vh;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 480px) {
+  .container {
+    margin: 40px auto;
+    min-height: auto;
+    border-radius: 16px;
+    padding: 30px 20px;
+  }
 }
 
 /* 💈 LOGO OFICIAL CONFIGURADO */
@@ -24,7 +50,7 @@ body {
 
 .logo-oficial {
   width: 100%;
-  max-width: 240px; /* Tamanho perfeito para destacar o selo */
+  max-width: 220px;
   height: auto;
   border-radius: 12px;
 }
@@ -32,21 +58,21 @@ body {
 .divisor-linha {
   width: 80px;
   height: 2px;
-  background: linear-gradient(90deg, #e53e3e 0%, #3182ce 100%); /* Linha estilizada nas cores do Barber Pole */
+  background: linear-gradient(90deg, #e53e3e 0%, #3182ce 100%);
   margin: 20px auto 0 auto;
   border-radius: 2px;
 }
 
 .instrucao {
   color: #a0aec0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   margin-bottom: 25px;
 }
 
 .lista-servicos {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 /* CARDS DE SERVIÇO EM ESTILO ESCURO PREMIUM */
@@ -55,7 +81,7 @@ body {
   justify-content: space-between;
   align-items: center;
   background-color: #24242b;
-  padding: 18px 22px;
+  padding: 14px 16px;
   border-radius: 10px;
   border: 1px solid #32323d;
   text-align: left;
@@ -67,38 +93,73 @@ body {
   border-color: #4a4a5a;
 }
 
+.servico-bloco-esquerdo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.servico-img-miniatura {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #32323d;
+}
+
+.servico-img-placeholder {
+  width: 60px;
+  height: 60px;
+  background-color: #1a1a1e;
+  border: 1px dashed #32323d;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #718096;
+}
+
+.servico-info {
+  flex: 1;
+  padding-right: 8px;
+}
+
 .servico-info h3 {
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
   color: #ffffff;
-  font-size: 1.1rem;
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
 .servico-info p {
   margin: 0;
   color: #a0aec0;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .servico-preco-acao {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
+  gap: 8px;
+  min-width: 90px;
 }
 
 .preco {
   font-weight: 700;
-  color: #63b3ed; /* Azul claro para destacar o preço no escuro */
-  font-size: 1.2rem;
+  color: #63b3ed;
+  font-size: 1.1rem;
 }
 
-/* BOTÕES DE AUTO CONTRASTE (BRANCO E PRETO) */
+/* BOTÕES GERAIS */
 button {
   background-color: #ffffff;
   color: #1a1a1e;
   border: none;
-  padding: 10px 20px;
-  font-size: 0.95rem;
+  padding: 8px 14px;
+  font-size: 0.9rem;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 700;
@@ -112,8 +173,8 @@ button:hover {
 .btn-barbeiro {
   background-color: #ffffff;
   color: #1a1a1e;
-  padding: 18px;
-  font-size: 1.1rem;
+  padding: 16px;
+  font-size: 1.05rem;
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -129,26 +190,67 @@ button:hover {
   margin: 25px 0;
 }
 
-/* SELETOR DE HORÁRIOS */
+.card-barbeiro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #24242b;
+  border: 1px solid #32323d;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.clique-selecao {
+  flex: 1;
+  padding: 18px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.barbeiro-nome {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.btn-instagram {
+  background-color: #1a1a1e;
+  color: #a0aec0;
+  text-decoration: none;
+  padding: 18px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-left: 1px solid #32323d;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.btn-instagram:hover {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: #ffffff;
+}
+
+/* SELETOR DE DATA / HORÁRIOS */
 .input-data {
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   font-size: 1rem;
   border-radius: 8px;
   border: 1px solid #32323d;
   background-color: #24242b;
   color: white;
-  margin-bottom: 25px;
-  box-sizing: border-box;
+  margin-bottom: 20px;
 }
 
 .resumo-escolhas {
   background-color: #1e2d3d;
   border-left: 4px solid #3182ce;
-  padding: 12px 16px;
+  padding: 12px;
   border-radius: 0 8px 8px 0;
   text-align: left;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   margin-bottom: 25px;
 }
 
@@ -159,7 +261,7 @@ button:hover {
 .grade-horarios {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 10px;
   margin: 20px 0;
 }
 
@@ -167,13 +269,14 @@ button:hover {
   background-color: #24242b;
   color: #ffffff;
   border: 1px solid #32323d;
-  padding: 12px;
+  padding: 10px 4px;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .btn-horario:hover {
-  background-color: #3182ce; /* Azul do pole ao selecionar */
+  background-color: #3182ce;
   border-color: #3182ce;
 }
 
@@ -190,21 +293,21 @@ button:hover {
   text-align: left;
   margin: 25px 0;
   background-color: #24242b;
-  padding: 20px;
+  padding: 16px;
   border-radius: 10px;
   border: 1px solid #32323d;
 }
 
 .campo-input {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .campo-input label {
   display: block;
   font-weight: 600;
   color: #a0aec0;
-  margin-bottom: 8px;
-  font-size: 0.9rem;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
 }
 
 .campo-input input {
@@ -215,36 +318,35 @@ button:hover {
   color: white;
   border-radius: 8px;
   font-size: 1rem;
-  box-sizing: border-box;
 }
 
 .btn-confirmar {
   width: 100%;
-  background-color: #e53e3e; /* Vermelho do pole para o botão de confirmação pesada */
+  background-color: #e53e3e;
   color: white;
   padding: 14px;
-  font-size: 1.05rem;
+  font-size: 1rem;
 }
 
 /* SUCESSO / NOTIFICAÇÃO DO SISTEMA */
 .card-sucesso {
   border: 1px solid #2d3748;
   border-radius: 12px;
-  padding: 25px;
+  padding: 20px;
   background-color: #24242b;
 }
 
 .detalhes-finais {
   text-align: left;
   background-color: #1a1a1e;
-  padding: 20px;
+  padding: 16px;
   border-radius: 8px;
   margin: 20px 0;
   border: 1px solid #32323d;
 }
 
 .detalhes-finais p {
-  margin: 10px 0;
+  margin: 8px 0;
 }
 
 hr {
@@ -262,9 +364,9 @@ hr {
   display: inline-block;
   background-color: #32323d;
   color: #e2e8f0;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -274,9 +376,9 @@ hr {
   color: #f6ad55;
   padding: 8px 12px;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   display: inline-block;
 }
 
@@ -284,19 +386,20 @@ hr {
   background-color: #2d1212;
   border: 1px solid #9b2c2c;
   color: #feb2b2;
-  padding: 20px;
+  padding: 16px;
   border-radius: 10px;
-  margin-top: 25px;
+  margin-top: 20px;
+  font-size: 0.9rem;
 }
 
-/* 📸 ESTILIZAÇÃO DO CARROSSEL DE ENTRADA */
+/* 📸 CARROSSEL DE IMAGENS DO TOPO */
 .secao-galeria-topo {
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   text-align: left;
 }
 
 .titulo-galeria {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #ffffff;
   margin-bottom: 12px;
   text-transform: uppercase;
@@ -307,9 +410,9 @@ hr {
 
 .carrossel-container {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   overflow-x: auto;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
@@ -319,15 +422,15 @@ hr {
 }
 
 .carrossel-item {
-  flex: 0 0 135px;
+  flex: 0 0 120px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .carrossel-img {
-  width: 135px;
-  height: 135px;
+  width: 120px;
+  height: 120px;
   object-fit: cover;
   border-radius: 10px;
   border: 1px solid #32323d;
@@ -335,128 +438,34 @@ hr {
 }
 
 .carrossel-legenda {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #a0aec0;
   text-align: center;
   font-weight: 600;
 }
 
-/* 💈 DESIGN DOS CARDS DOS BARBEIROS */
-.lista-barbeiros {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin: 30px 0;
-}
-
-.card-barbeiro {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #24242b;
-  border: 1px solid #32323d;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.clique-selecao {
-  flex: 1;
-  padding: 20px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.barbeiro-nome {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.btn-instagram {
-  background-color: #1a1a1e;
-  color: #a0aec0;
-  text-decoration: none;
-  padding: 22px 18px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  border-left: 1px solid #32323d;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.3s, color 0.3s;
-}
-
-.btn-instagram:hover {
-  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-  color: #ffffff;
-}
-
-/* ALINHAMENTO DO CARD DE SERVIÇO */
-.servico-bloco-esquerdo {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.servico-img-miniatura {
-  width: 65px;
-  height: 65px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #32323d;
-}
-
-.servico-img-placeholder {
-  width: 65px;
-  height: 65px;
-  background-color: #1a1a1e;
-  border: 1px dashed #32323d;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  color: #718096;
-}
-
-/* 🛒 ESTILOS DO NOVO SISTEMA DE CARRINHO */
-
-/* Efeito visual quando o card de serviço está selecionado */
+/* 🛒 SISTEMA DE CARRINHO E SELEÇÕES */
 .card-servico-item.item-selecionado {
   border-color: #3182ce;
   background-color: #1e2530;
   box-shadow: 0 0 10px rgba(49, 130, 206, 0.2);
 }
 
-/* Botão de adicionar ao carrinho */
 .btn-adicionar-item {
   background-color: #3182ce;
   color: #ffffff;
   border: none;
   font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
 }
 
-.btn-adicionar-item:hover {
-  background-color: #2b6cb0;
-}
-
-/* Botão de remover do carrinho */
 .btn-remover-item {
   background-color: #e53e3e;
   color: #ffffff;
   border: none;
   font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
 }
 
-.btn-remover-item:hover {
-  background-color: #c53030;
-}
-
-/* Barra do carrinho fixada na parte inferior da tela */
+/* Barra inferior do carrinho otimizada para o limite mobile */
 .barra-carrinho-fixa {
   position: fixed;
   bottom: 0;
@@ -464,7 +473,7 @@ hr {
   right: 0;
   background-color: #1a1a1e;
   border-top: 2px solid #3182ce;
-  padding: 15px 25px;
+  padding: 12px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -479,12 +488,12 @@ hr {
 }
 
 .qtd-itens {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #a0aec0;
 }
 
 .valor-total-carrinho {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #ffffff;
 }
 
@@ -492,62 +501,38 @@ hr {
   color: #48bb78;
 }
 
-/* Botão principal para prosseguir na barra do carrinho */
 .btn-avancar-fluxo {
   background-color: #48bb78;
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: 10px 18px;
   border-radius: 8px;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
-  transition: transform 0.1s, background 0.2s;
 }
 
-.btn-avancar-fluxo:hover {
-  background-color: #38a169;
-  transform: translateY(-1px);
-}
-
-.btn-avancar-fluxo:active {
-  transform: translateY(1px);
-}
-
-/* Badge que mostra a lista de serviços no passo 2 */
 .badge-multi-servicos {
   background-color: #2d3748;
   color: #e2e8f0;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   display: inline-block;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   border: 1px solid #4a5568;
 } 
 
-/* 💬 BOTÃO DA NOTIFICAÇÃO DO WHATSAPP */
 .btn-enviar-whats-notificacao {
-  background-color: #25d366; /* Verde oficial do WhatsApp */
+  background-color: #25d366;
   color: #ffffff;
   border: none;
-  padding: 15px 20px;
+  padding: 14px;
   border-radius: 8px;
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1rem;
   width: 100%;
-  margin-top: 20px;
-  cursor: pointer;
+  margin-top: 15px;
   box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-  transition: background 0.2s, transform 0.1s;
-}
-
-.btn-enviar-whats-notificacao:hover {
-  background-color: #1ebd56;
-  transform: translateY(-1px);
-}
-
-.btn-enviar-whats-notificacao:active {
-  transform: translateY(1px);
 }
