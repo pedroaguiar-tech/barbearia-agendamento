@@ -249,13 +249,19 @@ function App() {
     }
   }
 
-  async function cancelarAgendamento(idParaRemover, confirmacaoTexto = 'Cancelar este agendamento?') {
-    const confirmar = window.confirm(confirmacaoTexto)
-    if (confirmar) {
+  // 🛠️ FUNÇÃO DE CANCELAMENTO / DESBLOQUEIO AJUSTADA
+  async function cancelarAgendamento(idParaRemover, confirmacaoTexto) {
+    const mensagem = typeof confirmacaoTexto === 'string' ? confirmacaoTexto : 'Deseja realmente cancelar/desbloquear este horário?'
+    const confirmar = window.confirm(mensagem)
+    
+    if (confirmar && idParaRemover) {
       try {
         await deleteDoc(doc(db, 'agendamentos', idParaRemover))
-        alert('Agendamento cancelado com sucesso!')
-      } catch (error) { console.error(error) }
+        alert('Horário liberado com sucesso!')
+      } catch (error) { 
+        console.error("Erro ao remover do banco:", error)
+        alert('Erro ao tentar alterar o horário. Tente novamente.')
+      }
     }
   }
 
