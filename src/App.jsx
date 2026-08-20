@@ -249,22 +249,39 @@ function App() {
     }
   }
 
-  // 🛠️ FUNÇÃO DE CANCELAMENTO / DESBLOQUEIO AJUSTADA
-  async function cancelarAgendamento(idParaRemover, confirmacaoTexto) {
-    const mensagem = typeof confirmacaoTexto === 'string' ? confirmacaoTexto : 'Deseja realmente cancelar/desbloquear este horário?'
-    const confirmar = window.confirm(mensagem)
-    
-    if (confirmar && idParaRemover) {
+  // ------------------------------------------------------------------
+  // 🟢 FUNÇÕES CORRIGIDAS DE CANCELAR E DESBLOQUEAR
+  // ------------------------------------------------------------------
+  
+  // Usado apenas para desmarcar agendamentos normais
+  async function cancelarAgendamento(idParaRemover) {
+    if (window.confirm('Deseja realmente desmarcar este agendamento?')) {
+      if (!idParaRemover) return alert('Erro: ID do agendamento não encontrado!');
       try {
         await deleteDoc(doc(db, 'agendamentos', idParaRemover))
-        alert('Horário liberado com sucesso!')
+        alert('Agendamento desmarcado com sucesso!')
       } catch (error) { 
-        console.error("Erro ao remover do banco:", error)
-        alert('Erro ao tentar alterar o horário. Tente novamente.')
+        console.error(error)
+        alert('Erro de conexão ao cancelar.')
       }
     }
   }
 
+  // NOVA: Exclusiva para liberar bloqueios manuais do barbeiro
+  async function desbloquearHorarioManual(idBloqueio) {
+    if (window.confirm('Deseja desbloquear e abrir este horário novamente para os clientes?')) {
+      if (!idBloqueio) return alert('Erro: ID do bloqueio não encontrado!');
+      try {
+        await deleteDoc(doc(db, 'agendamentos', idBloqueio))
+        alert('🟢 Horário liberado com sucesso!')
+      } catch (error) { 
+        console.error(error)
+        alert('Erro ao liberar o horário.')
+      }
+    }
+  }
+
+  // Exclusiva para cancelar a vaga do fixo apenas naquele dia
   async function liberarHorarioFixo(fixoObj) {
     if (window.confirm(`Cancelar o horário do cliente fixo (${fixoObj.cliente}) hoje e liberar a vaga?`)) {
       try {
@@ -272,9 +289,12 @@ function App() {
           cliente: `${fixoObj.cliente} (CANCELADO)`, telefone: 'Fixo Liberado', barbeiro: barbeiroPainel,
           data: dataFiltroPainel, horario: fixoObj.horario, servicos: 'Fixo Cancelado', valor: 0, status: 'fixo_cancelado', criadoEm: Date.now()
         })
+        alert('🟢 Horário do cliente fixo liberado para hoje!')
       } catch (error) { console.error(error) }
     }
   }
+
+  // ------------------------------------------------------------------
 
   async function bloquearHorarioBarbeiro(e) {
     e.preventDefault()
@@ -720,7 +740,7 @@ function App() {
               <div key={ag.id} style={{ backgroundColor: '#222', padding: '12px', borderRadius: '8px', marginBottom: '10px', borderLeft: '4px solid #eccc68' }}>
                 <p style={{ margin: '0 0 5px 0', fontSize: '14px', fontWeight: 'bold' }}>{formatarData(ag.data)} às {ag.horario}</p>
                 <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#aaa' }}>Profissional: {ag.barbeiro} | Serviço: {ag.servicos}</p>
-                <button onClick={() => cancelarAgendamento(ag.id, 'Deseja realmente desmarcar este horário?')} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>
+                <button onClick={() => cancelarAgendamento(ag.id)} style={{ backgroundColor: '#ff4757', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>
                   Desmarcar Horário ❌
                 </button>
               </div>
@@ -752,7 +772,7 @@ function App() {
                 <button className={`btn-horario ${barbeiroPainel === 'Lucas' ? 'selecionado' : ''}`} onClick={() => setBarbeiroPainel('Lucas')}>Lucas</button>
               </div>
 
-              {/* 💵 DASHBOARD COM NOVO CONTADOR */}
+              {/* 💵 DASHBOARD */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '20px' }}>
                 <div style={{ backgroundColor: '#1e1e1e', padding: '10px', borderRadius: '8px', border: '1px solid #333' }}>
                   <span style={{ fontSize: '10px', color: '#aaa' }}>Hoje 💵</span>
@@ -768,7 +788,7 @@ function App() {
                 </div>
               </div>
 
-              {/* 🚫 NOVO: BLOQUEAR HORÁRIO ESPECÍFICO */}
+              {/* 🚫 BLOQUEAR HORÁRIO ESPECÍFICO */}
               <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #ff4757', textAlign: 'left' }}>
                 <h3 style={{ fontSize: '14px', color: '#ff4757', margin: '0 0 8px 0' }}>🚫 Bloquear Horário Específico</h3>
                 <p style={{ fontSize: '11px', color: '#aaa', margin: '0 0 10px 0' }}>Feche um horário no site (ex: almoço ou saída médica):</p>
@@ -892,7 +912,7 @@ function App() {
                         </div>
                       )}
                       {slot.tipo === 'Bloqueio' && (
-                        <button onClick={() => cancelarAgendamento(slot.item.id, 'Deseja desbloquear e abrir este horário novamente?')} style={{ backgroundColor: '#2ed573', color: '#000', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>Liberar 🟢</button>
+                        <button onClick={() => desbloquearHorarioManual(slot.item.id)} style={{ backgroundColor: '#2ed573', color: '#000', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold' }}>Liberar 🟢</button>
                       )}
                       {slot.status === 'concluido' && (<span style={{ fontSize: '10px', color: '#2ed573', fontWeight: 'bold' }}>✓ Concluído</span>)}
                     </div>
