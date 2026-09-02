@@ -249,11 +249,6 @@ function App() {
     }
   }
 
-  // ------------------------------------------------------------------
-  // 🟢 FUNÇÕES CORRIGIDAS DE CANCELAR E DESBLOQUEAR
-  // ------------------------------------------------------------------
-  
-  // Usado apenas para desmarcar agendamentos normais
   async function cancelarAgendamento(idParaRemover) {
     if (window.confirm('Deseja realmente desmarcar este agendamento?')) {
       if (!idParaRemover) return alert('Erro: ID do agendamento não encontrado!');
@@ -267,7 +262,6 @@ function App() {
     }
   }
 
-  // NOVA: Exclusiva para liberar bloqueios manuais do barbeiro
   async function desbloquearHorarioManual(idBloqueio) {
     if (window.confirm('Deseja desbloquear e abrir este horário novamente para os clientes?')) {
       if (!idBloqueio) return alert('Erro: ID do bloqueio não encontrado!');
@@ -281,7 +275,6 @@ function App() {
     }
   }
 
-  // Exclusiva para cancelar a vaga do fixo apenas naquele dia
   async function liberarHorarioFixo(fixoObj) {
     if (window.confirm(`Cancelar o horário do cliente fixo (${fixoObj.cliente}) hoje e liberar a vaga?`)) {
       try {
@@ -293,8 +286,6 @@ function App() {
       } catch (error) { console.error(error) }
     }
   }
-
-  // ------------------------------------------------------------------
 
   async function bloquearHorarioBarbeiro(e) {
     e.preventDefault()
@@ -383,48 +374,54 @@ function App() {
     return `${dia}/${mes}/${ano}`
   }
 
+  // 🟢 FUNÇÃO DE BLOQUEIO DE DIAS CORRIGIDA
   function verificarDiaBloqueado(dataString) {
-    if (!dataString) return false
-    const hojeObj = new Date()
-    const ano = hojeObj.getFullYear()
-    const mes = String(hojeObj.getMonth() + 1).padStart(2, '0')
-    const dia = String(hojeObj.getDate()).padStart(2, '0')
-    const dataHojeBR = `${ano}-${mes}-${dia}`
+    if (!dataString) return false;
     
-    const [anoAlvo, mesAlvo, diaAlvo] = dataString.split('-').map(Number)
-    const dataAlvoObj = new Date(anoAlvo, mesAlvo - 1, diaAlvo)
-    dataAlvoObj.setHours(0,0,0,0)
+    const hoje = new Date();
+    // Zera as horas para comparar apenas datas limpas
+    const hojeZerado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     
-    const dataHojeRealObj = new Date(ano, hojeObj.getMonth(), hojeObj.getDate())
-
-    if (dataAlvoObj < dataHojeRealObj) return true // Bloqueia dias anteriores
-
-    // Janela de agendamento original
-    const agora = new Date()
-    const limiteSemana = new Date(agora)
-    if ((agora.getDay() === 3 || agora.getDay() === 0) && agora.getHours() >= 21) {
-      limiteSemana.setDate(limiteSemana.getDate() + 1)
-    }
-    limiteSemana.setHours(0, 0, 0, 0)
+    const [ano, mes, dia] = dataString.split('-').map(Number);
+    const dataAlvo = new Date(ano, mes - 1, dia);
     
-    let inicioJanela = new Date(limiteSemana)
-    let fimJanela = new Date(limiteSemana)
-    const diaSemanaHoje = limiteSemana.getDay()
+    // 1. Dias anteriores a hoje são sempre bloqueados
+    if (dataAlvo < hojeZerado) return true;
+    
+    // 2. Trava de segurança: impede o agendamento de pular para semanas futuras distantes
+    const diferencaDias = (dataAlvo - hojeZerado) / (1000 * 60 * 60 * 24);
+    if (diferencaDias > 6) return true;
 
-    if (diaSemanaHoje >= 1 && diaSemanaHoje <= 3) {
-      inicioJanela.setDate(limiteSemana.getDate() - (diaSemanaHoje - 1))
-      fimJanela.setDate(inicioJanela.getDate() + 2)
+    const diaSemanaHoje = hoje.getDay();
+    const horaHoje = hoje.getHours();
+    const diaSemanaAlvo = dataAlvo.getDay();
+
+    // 3. Define qual das duas janelas de agendamento está aberta agora
+    let janelaAberta = 0; // 1 = Segunda a Quarta | 2 = Quinta a Domingo
+    
+    if (
+      (diaSemanaHoje === 0 && horaHoje >= 21) || // Domingo depois das 21h
+      (diaSemanaHoje === 1) ||                   // Segunda-feira (o dia todo)
+      (diaSemanaHoje === 2) ||                   // Terça-feira (o dia todo)
+      (diaSemanaHoje === 3 && horaHoje < 21)     // Quarta-feira antes das 21h
+    ) {
+      janelaAberta = 1;
     } else {
-      inicioJanela.setDate(limiteSemana.getDate() + (diaSemanaHoje === 0 ? -3 : 4 - diaSemanaHoje))
-      fimJanela.setDate(limiteSemana.getDate() + (diaSemanaHoje === 0 ? 0 : 7 - diaSemanaHoje))
+      janelaAberta = 2; // Quarta 21h+ até Domingo 20:59
     }
 
-    if (dataAlvoObj < inicioJanela || dataAlvoObj > fimJanela) return true
-    return false
+    // 4. Mapeia se o dia que o cliente clicou faz parte da janela 1 ou 2
+    const alvoEhJanela1 = (diaSemanaAlvo === 1 || diaSemanaAlvo === 2 || diaSemanaAlvo === 3);
+    const alvoEhJanela2 = (diaSemanaAlvo === 4 || diaSemanaAlvo === 5 || diaSemanaAlvo === 6 || diaSemanaAlvo === 0);
+
+    // 5. Aplica a restrição de acordo com a janela aberta no momento
+    if (janelaAberta === 1 && !alvoEhJanela1) return true; // Bloqueia quinta a domingo
+    if (janelaAberta === 2 && !alvoEhJanela2) return true; // Bloqueia segunda a quarta
+
+    return false; // Permite o agendamento
   }
 
   function checarHorarioOcupado(horario) {
-    // 1. Verifica no Firebase (Agendamentos e Bloqueios)
     const registroNuvem = listaAgendamentos.find(item => item.data === dataSelecionada && item.barbeiro === barbeiroSelecionado && item.horario === horario)
     if (registroNuvem) {
       if (registroNuvem.status === 'fixo_cancelado') return { ocupado: false, motivo: '' }
@@ -432,7 +429,6 @@ function App() {
       return { ocupado: true, motivo: registroNuvem.cliente }
     }
 
-    // 2. Travar horários passados se o agendamento for para HOJE
     if (dataSelecionada) {
       const hoje = new Date()
       const anoH = hoje.getFullYear()
@@ -449,7 +445,6 @@ function App() {
       }
     }
 
-    // 3. Verifica Fixos
     if (dataSelecionada) {
       const [ano, mes, dia] = dataSelecionada.split('-').map(Number)
       const diaSemana = new Date(ano, mes - 1, dia).getDay()
