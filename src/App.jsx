@@ -8,7 +8,8 @@ import {
   doc, 
   updateDoc, 
   deleteDoc,
-  setDoc
+  setDoc,
+  getDocs
 } from 'firebase/firestore'
 
 function App() {
@@ -48,6 +49,51 @@ function App() {
       ]
     }
   })
+
+  // 🔄 MIGRAÇÃO AUTOMÁTICA DOS FIXOS ANTIGOS PARA O FIREBASE (SEM PERDER NADA)
+  useEffect(() => {
+    async function migrarFixosAntigos() {
+      try {
+        const snapshot = await getDocs(collection(db, 'clientes_fixos'))
+        const fixosExistentes = snapshot.docs.map(doc => doc.data())
+        
+        const clientesFixosAntigos = [
+          { barbeiro: 'Brendon', diaSemana: 3, horario: '13:00', cliente: 'João Paulo (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 3, horario: '18:00', cliente: 'Jhow (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 3, horario: '19:00', cliente: 'Celso (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 4, horario: '13:00', cliente: 'Fabricio (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 5, horario: '09:00', cliente: 'Diego (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 5, horario: '10:00', cliente: 'Alemão (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 5, horario: '13:00', cliente: 'Roger (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 5, horario: '17:00', cliente: 'Raul (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 5, horario: '18:00', cliente: 'Pedrão (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 5, horario: '19:00', cliente: 'Wendel (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 5, horario: '20:00', cliente: 'Juninho (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 6, horario: '11:00', cliente: 'Davi Primo (Fixo)' },
+          { barbeiro: 'Brendon', diaSemana: 6, horario: '18:00', cliente: 'Paulo (Fixo)' },
+        ]
+
+        for (const fixoAntigo of clientesFixosAntigos) {
+          const jaExiste = fixosExistentes.some(
+            f => f.barbeiro === fixoAntigo.barbeiro && 
+                 f.diaSemana === fixoAntigo.diaSemana && 
+                 f.horario === fixoAntigo.horario
+          )
+
+          if (!jaExiste) {
+            await addDoc(collection(db, 'clientes_fixos'), {
+              ...fixoAntigo,
+              criadoEm: Date.now()
+            })
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao migrar fixos antigos:", err)
+      }
+    }
+
+    migrarFixosAntigos()
+  }, [])
 
   useEffect(() => {
     const unsubscribeAgendamentos = onSnapshot(collection(db, 'agendamentos'), (snapshot) => {
@@ -124,22 +170,6 @@ function App() {
   // 📋 DADOS DINÂMICOS
   const tabelaServicos = configBarbeiros[barbeiroSelecionado || 'Brendon']?.servicos || []
   const fotosCarrossel = configBarbeiros[barbeiroSelecionado || 'Brendon']?.galeria || []
-
-  const clientesFixosPadraoBrendon = [
-    { diaSemana: 3, horario: '13:00', cliente: 'João Paulo (Fixo)' },
-    { diaSemana: 3, horario: '18:00', cliente: 'Jhow (Fixo)' },
-    { diaSemana: 3, horario: '19:00', cliente: 'Celso (Fixo)' },
-    { diaSemana: 4, horario: '13:00', cliente: 'Fabricio (Fixo)' },
-    { diaSemana: 5, horario: '09:00', cliente: 'Diego (Fixo)' },
-    { diaSemana: 5, horario: '10:00', cliente: 'Alemão (Fixo)' },
-    { diaSemana: 5, horario: '13:00', cliente: 'Roger (Fixo)' },
-    { diaSemana: 5, horario: '17:00', cliente: 'Raul (Fixo)' },
-    { diaSemana: 5, horario: '18:00', cliente: 'Pedrão (Fixo)' },
-    { diaSemana: 5, horario: '19:00', cliente: 'Wendel (Fixo)' },
-    { diaSemana: 5, horario: '20:00', cliente: 'Juninho (Fixo)' },
-    { diaSemana: 6, horario: '11:00', cliente: 'Davi Primo (Fixo)' },
-    { diaSemana: 6, horario: '18:00', cliente: 'Paulo (Fixo)' },
-  ]
 
   function ehDiaPromocional(dataStr) {
     if (!dataStr) return false
@@ -303,8 +333,7 @@ function App() {
     e.preventDefault()
     if (!novoFixoNome.trim()) return alert('Digite o nome do cliente fixo.')
     const conflitoNuvem = listaFixosNuvem.find(f => f.barbeiro === barbeiroPainel && f.diaSemana === Number(novoFixoDia) && f.horario === novoFixoHorario)
-    const conflitoPadrao = barbeiroPainel === 'Brendon' && clientesFixosPadraoBrendon.find(f => f.diaSemana === Number(novoFixoDia) && f.horario === novoFixoHorario)
-    if (conflitoNuvem || conflitoPadrao) return alert(`O horário já está reservado!`)
+    if (conflitoNuvem) return alert(`O horário já está reservado!`)
     try {
       await addDoc(collection(db, 'clientes_fixos'), {
         barbeiro: barbeiroPainel, diaSemana: Number(novoFixoDia), horario: novoFixoHorario, cliente: `${novoFixoNome.trim()} (Fixo)`, criadoEm: Date.now()
@@ -316,12 +345,17 @@ function App() {
 
   async function deletarFixoDefinitivo(idFixo) {
     if (window.confirm('Remover este cliente fixo definitivamente?')) {
-      try { await deleteDoc(doc(db, 'clientes_fixos', idFixo)) } catch (error) { console.error(error) }
+      try { 
+        await deleteDoc(doc(db, 'clientes_fixos', idFixo))
+        alert('Cliente fixo removido com sucesso!')
+      } catch (error) { 
+        console.error(error)
+      }
     }
   }
 
   async function toggleDiaFolga(diaIndex) {
-    const folgasAtuais = configBarbeiros[barbeiroPainel]?.folgas || [0, 1]
+    const folgasAtuais = configBarbeiros[barbeiroPainel]?.folgas || (barbeiroPainel === 'Brendon' ? [0, 1] : [])
     let novasFolgas = folgasAtuais.includes(diaIndex) ? folgasAtuais.filter(d => d !== diaIndex) : [...folgasAtuais, diaIndex]
     try { await setDoc(doc(db, 'config_barbeiros', barbeiroPainel), { ...configBarbeiros[barbeiroPainel], folgas: novasFolgas }, { merge: true }) } catch (error) { console.error(error) }
   }
@@ -374,21 +408,18 @@ function App() {
     return `${dia}/${mes}/${ano}`
   }
 
-  // 🟢 FUNÇÃO DE BLOQUEIO DE DIAS CORRIGIDA
+  // 🟢 REGRA DAS JANELAS DE DIAS
   function verificarDiaBloqueado(dataString) {
     if (!dataString) return false;
     
     const hoje = new Date();
-    // Zera as horas para comparar apenas datas limpas
     const hojeZerado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     
     const [ano, mes, dia] = dataString.split('-').map(Number);
     const dataAlvo = new Date(ano, mes - 1, dia);
     
-    // 1. Dias anteriores a hoje são sempre bloqueados
     if (dataAlvo < hojeZerado) return true;
     
-    // 2. Trava de segurança: impede o agendamento de pular para semanas futuras distantes
     const diferencaDias = (dataAlvo - hojeZerado) / (1000 * 60 * 60 * 24);
     if (diferencaDias > 6) return true;
 
@@ -396,29 +427,26 @@ function App() {
     const horaHoje = hoje.getHours();
     const diaSemanaAlvo = dataAlvo.getDay();
 
-    // 3. Define qual das duas janelas de agendamento está aberta agora
     let janelaAberta = 0; // 1 = Segunda a Quarta | 2 = Quinta a Domingo
     
     if (
-      (diaSemanaHoje === 0 && horaHoje >= 21) || // Domingo depois das 21h
-      (diaSemanaHoje === 1) ||                   // Segunda-feira (o dia todo)
-      (diaSemanaHoje === 2) ||                   // Terça-feira (o dia todo)
-      (diaSemanaHoje === 3 && horaHoje < 21)     // Quarta-feira antes das 21h
+      (diaSemanaHoje === 0 && horaHoje >= 21) || 
+      (diaSemanaHoje === 1) ||                   
+      (diaSemanaHoje === 2) ||                   
+      (diaSemanaHoje === 3 && horaHoje < 21)     
     ) {
       janelaAberta = 1;
     } else {
-      janelaAberta = 2; // Quarta 21h+ até Domingo 20:59
+      janelaAberta = 2; 
     }
 
-    // 4. Mapeia se o dia que o cliente clicou faz parte da janela 1 ou 2
     const alvoEhJanela1 = (diaSemanaAlvo === 1 || diaSemanaAlvo === 2 || diaSemanaAlvo === 3);
     const alvoEhJanela2 = (diaSemanaAlvo === 4 || diaSemanaAlvo === 5 || diaSemanaAlvo === 6 || diaSemanaAlvo === 0);
 
-    // 5. Aplica a restrição de acordo com a janela aberta no momento
-    if (janelaAberta === 1 && !alvoEhJanela1) return true; // Bloqueia quinta a domingo
-    if (janelaAberta === 2 && !alvoEhJanela2) return true; // Bloqueia segunda a quarta
+    if (janelaAberta === 1 && !alvoEhJanela1) return true; 
+    if (janelaAberta === 2 && !alvoEhJanela2) return true; 
 
-    return false; // Permite o agendamento
+    return false; 
   }
 
   function checarHorarioOcupado(horario) {
@@ -451,11 +479,6 @@ function App() {
 
       const fixoNuvem = listaFixosNuvem.find(f => f.barbeiro === barbeiroSelecionado && f.diaSemana === diaSemana && f.horario === horario)
       if (fixoNuvem) return { ocupado: true, motivo: fixoNuvem.cliente }
-
-      if (barbeiroSelecionado === 'Brendon') {
-        const fixoPadrao = clientesFixosPadraoBrendon.find(f => f.diaSemana === diaSemana && f.horario === horario)
-        if (fixoPadrao) return { ocupado: true, motivo: fixoPadrao.cliente }
-      }
     }
     return { ocupado: false, motivo: '' }
   }
@@ -495,10 +518,6 @@ function App() {
       const fixoNuvem = listaFixosNuvem.find(f => f.barbeiro === barbeiroPainel && f.diaSemana === diaSemana && f.horario === horario)
       if (fixoNuvem && (!regNuvem || regNuvem.status !== 'fixo_cancelado')) return { horario, cliente: fixoNuvem.cliente, tipo: 'Fixo', status: 'fixo', item: fixoNuvem }
 
-      if (barbeiroPainel === 'Brendon') {
-        const fixoPadrao = clientesFixosPadraoBrendon.find(f => f.diaSemana === diaSemana && f.horario === horario)
-        if (fixoPadrao && (!regNuvem || regNuvem.status !== 'fixo_cancelado')) return { horario, cliente: fixoPadrao.cliente, tipo: 'Fixo', status: 'fixo', item: fixoPadrao }
-      }
       return { horario, cliente: 'Livre / Disponível', tipo: 'Livre', status: 'livre', item: null }
     })
   }
@@ -518,10 +537,6 @@ function App() {
   const quadroGeralFormDia = obterHorariosDoDiaSemana(Number(novoFixoDia)).map(h => {
     const fixoNuvem = listaFixosNuvem.find(f => f.barbeiro === barbeiroPainel && f.diaSemana === Number(novoFixoDia) && f.horario === h)
     if (fixoNuvem) return { horario: h, cliente: fixoNuvem.cliente, ocupado: true, idNuvem: fixoNuvem.id }
-    if (barbeiroPainel === 'Brendon') {
-      const fixoPadrao = clientesFixosPadraoBrendon.find(f => f.diaSemana === Number(novoFixoDia) && f.horario === h)
-      if (fixoPadrao) return { horario: h, cliente: fixoPadrao.cliente, ocupado: true, idNuvem: null }
-    }
     return { horario: h, cliente: 'Livre / Disponível', ocupado: false, idNuvem: null }
   })
 
