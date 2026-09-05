@@ -9,7 +9,9 @@ import {
   updateDoc, 
   deleteDoc,
   setDoc,
-  getDocs
+  getDocs,
+  query,
+  where
 } from 'firebase/firestore'
 
 function App() {
@@ -20,6 +22,7 @@ function App() {
   const [horarioSelecionado, setHorarioSelecionado] = useState('')
   const [nomeCliente, setNomeCliente] = useState('')
   const [telefoneCliente, setTelefoneCliente] = useState('')
+  const [carregandoAgendamento, setCarregandoAgendamento] = useState(false)
 
   // ☁️ BANCO DE DADOS EM TEMPO REAL NA NUVEM (FIREBASE)
   const [listaAgendamentos, setListaAgendamentos] = useState([])
@@ -234,11 +237,35 @@ function App() {
     setPasso(4)
   }
 
+  // 🛡️ TRAVA EM TEMPO REAL PARA EVITAR CONCORRÊNCIA E AGENDAMENTOS DUPLOS
   async function finalizarAgendamento(e) {
     e.preventDefault()
     if (nomeCliente.trim() === '' || telefoneCliente.trim() === '') return alert('Por favor, preencha o seu nome e telefone.')
+    
+    setCarregandoAgendamento(true) // Desativa o botão temporariamente
 
     try {
+      // Pergunta diretamente ao banco: alguém já pegou esse horário agora?
+      const q = query(
+        collection(db, 'agendamentos'),
+        where('barbeiro', '==', barbeiroSelecionado),
+        where('data', '==', dataSelecionada),
+        where('horario', '==', horarioSelecionado)
+      )
+      
+      const querySnapshot = await getDocs(q)
+      const jaExisteAgendamentoValido = querySnapshot.docs.some(
+        docSnapshot => docSnapshot.data().status !== 'fixo_cancelado'
+      )
+
+      if (jaExisteAgendamentoValido) {
+        setCarregandoAgendamento(false)
+        alert('⚠️ Ops! Esse horário acabou de ser agendado por outro cliente. Por favor, escolha outro horário.')
+        setPasso(3) // Manda o usuário voltar para escolher outro horário
+        return // Para a execução do código aqui
+      }
+
+      // Se passou na checagem, salva o agendamento!
       await addDoc(collection(db, 'agendamentos'), {
         cliente: nomeCliente,
         telefone: telefoneCliente,
@@ -251,8 +278,11 @@ function App() {
         sinal: 'R$ 10,00',
         criadoEm: Date.now()
       })
+      setCarregandoAgendamento(false)
       setPasso(5)
     } catch (error) {
+      setCarregandoAgendamento(false)
+      console.error(error)
       alert("Ocorreu um erro ao agendar. Tente novamente!")
     }
   }
@@ -701,8 +731,8 @@ function App() {
           </div>
           <h3>Para quem é o agendamento?</h3>
           <form onSubmit={finalizarAgendamento} className="formulario-cliente">
-            <input type="text" placeholder="Seu Nome Completo" value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} />
-            <input type="tel" placeholder="Seu Telefone (WhatsApp)" value={telefoneCliente} onChange={(e) => setTelefoneCliente(e.target.value)} />
+            <input type="text" placeholder="Seu Nome Completo" value={nomeCliente} onChange={(e) => setNomeCliente(e.target.value)} disabled={carregandoAgendamento} />
+            <input type="tel" placeholder="Seu Telefone (WhatsApp)" value={telefoneCliente} onChange={(e) => setTelefoneCliente(e.target.value)} disabled={carregandoAgendamento} />
             <div style={{ backgroundColor: '#181818', padding: '15px', borderRadius: '10px', marginTop: '15px', border: '1px solid #eccc68', textAlign: 'left' }}>
               <h4 style={{ color: '#eccc68', margin: '0 0 8px 0', fontSize: '14px' }}>📌 Garantia de Reserva (R$ 10,00)</h4>
               <p style={{ fontSize: '11px', color: '#ccc', margin: '0 0 10px 0' }}>Para confirmar a sua vaga, faça o envio do sinal via PIX (descontado do total).</p>
@@ -712,9 +742,11 @@ function App() {
                 <button type="button" onClick={() => copiarPix(dadosBarbeiros[barbeiroSelecionado]?.pix)} style={{ backgroundColor: '#eccc68', color: '#000', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '11px' }}>📋 Copiar Chave PIX</button>
               </div>
             </div>
-            <button type="submit" className="btn-confirmar" style={{ marginTop: '15px' }}>Avançar e Enviar Comprovante 📲</button>
+            <button type="submit" className="btn-confirmar" style={{ marginTop: '15px' }} disabled={carregandoAgendamento}>
+              {carregandoAgendamento ? 'Verificando vaga... ⏳' : 'Avançar e Enviar Comprovante 📲'}
+            </button>
           </form>
-          <button className="btn-voltar" onClick={() => setPasso(3)}>Voltar</button>
+          <button className="btn-voltar" onClick={() => setPasso(3)} disabled={carregandoAgendamento}>Voltar</button>
         </div>
       )}
 
@@ -939,4 +971,4 @@ function App() {
   )
 }
 
-export default App 
+export default App
